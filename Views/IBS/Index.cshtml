@@ -33,6 +33,12 @@
                 </div>
                 <div class="row mt-3 mx-1">
                     <div class="col-6">
+                        <label asp-for="SelectedCompany">Company</label>
+                        <select asp-for="SelectedCompany"
+                                asp-items="Model.CompanyChoices" class="form-control">
+                        </select>
+                    </div>
+                    <div class="col-6">
                         <div class="form-check">
                             <input asp-for="IBSCategory" value="Disbursement" class="form-check-input" type="radio" name="flexRadioDefault" id="IBSDisbursementRadioButton" checked>
                             <label class="form-check-label" for="IBSDisbursementRadioButton">
@@ -57,12 +63,6 @@
                                 IBS Purchases
                             </label>
                         </div>
-                    </div>
-                    <div class="col-6">
-                        <label asp-for="SelectedCompany">Company</label>
-                        <select asp-for="SelectedCompany"
-                            asp-items="Model.CompanyChoices" class="form-control">
-                        </select>
                     </div>
                 </div>
                 <div class="row mt-3 justify-content-end">
