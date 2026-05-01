@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.AspNetCore.Mvc.Rendering;
+using System.ComponentModel.DataAnnotations;
 
 namespace TaxDeclaration.Models.ViewModels
 {
@@ -6,7 +7,10 @@ namespace TaxDeclaration.Models.ViewModels
     {
         public DateOnly DateFrom { get; set; }
         public DateTime DateTo { get; set; }
-        public required string Company { get; set; }
-        public required string FileFormat { get; set; }
+        public string Company { get; set; }
+        public string FileFormat { get; set; }
+        public string? IBSCategory { get; set; }
+        public string? SelectedCompany { get; set; }
+        public List<SelectListItem>? CompanyChoices { get; set; }
     }
 }

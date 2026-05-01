@@ -1,21 +1,21 @@
 ﻿@model TaxDeclaration.Models.ViewModels.GenerateTaxDeclarationViewModel
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "IBS Tax Declaration";
 }
 
-<div class="row">
+<div class="row text-light bg-secondary rounded shadow p-2 m-1">
     <div class="col-6">
         <h1>@ViewData["Title"]</h1>
     </div>
 </div>
 
-<div class="card p-3 mt-3">
+<div class="card rounded shadow p-3 mt-3">
     <div class="row">
         <div class="col-12">
             <form asp-action="Process">
                 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-                <div class="row">
+                <div class="row mt-3">
                     <div class="col-6">
                         <div class="form-group">
                             <label asp-for="DateFrom" class="control-label"></label>
@@ -29,6 +29,40 @@
                             <input type="date" asp-for="DateTo" class="form-control" value="@DateOnly.FromDateTime(new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1).AddDays(-1))" />
                             <span asp-validation-for="DateTo" class="text-danger"></span>
                         </div>
+                    </div>
+                </div>
+                <div class="row mt-3 mx-1">
+                    <div class="col-6">
+                        <div class="form-check">
+                            <input asp-for="IBSCategory" value="Disbursement" class="form-check-input" type="radio" name="flexRadioDefault" id="IBSDisbursementRadioButton" checked>
+                            <label class="form-check-label" for="IBSDisbursementRadioButton">
+                                IBS Disbursement
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input asp-for="IBSCategory" value="Hauling" class="form-check-input" type="radio" name="flexRadioDefault" id="IBSHaulingRadioButton" disabled>
+                            <label class="form-check-label" for="flexRadioCheckedDisabled">
+                                IBS Hauling
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input asp-for="IBSCategory" value="Sales" class="form-check-input" type="radio" name="flexRadioDefault" id="IBSSalesRadioButton" disabled>
+                            <label class="form-check-label" for="flexRadioCheckedDisabled">
+                                IBS Sales
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input asp-for="IBSCategory" value="Purchases" class="form-check-input" type="radio" name="flexRadioDefault" id="IBSPurchasesRadioButton" disabled>
+                            <label class="form-check-label" for="flexRadioCheckedDisabled">
+                                IBS Purchases
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <label asp-for="SelectedCompany">Company</label>
+                        <select asp-for="SelectedCompany"
+                            asp-items="Model.CompanyChoices" class="form-control">
+                        </select>
                     </div>
                 </div>
                 <div class="row mt-3 justify-content-end">
