@@ -19,14 +19,14 @@
                     <div class="col-6">
                         <div class="form-group">
                             <label asp-for="DateFrom" class="control-label"></label>
-                            <input type="date" asp-for="DateFrom" class="form-control" value="@DateOnly.FromDateTime(new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1).AddMonths(-1))" />
+                            <input type="date" asp-for="DateFrom" class="form-control" value="@DateOnly.FromDateTime(new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1).AddMonths(-1)).ToString("yyyy-MM-dd")" />
                             <span asp-validation-for="DateFrom" class="text-danger"></span>
                         </div>
                     </div>
                     <div class="col-6">
                         <div class="form-group">
                             <label asp-for="DateTo" class="control-label"></label>
-                            <input type="date" asp-for="DateTo" class="form-control" value="@DateOnly.FromDateTime(new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1).AddDays(-1))" />
+                            <input type="date" asp-for="DateTo" class="form-control" value="@DateOnly.FromDateTime(new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1).AddDays(-1)).ToString("yyyy-MM-dd")" />
                             <span asp-validation-for="DateTo" class="text-danger"></span>
                         </div>
                     </div>
