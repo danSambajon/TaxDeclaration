@@ -19,10 +19,10 @@ namespace TaxDeclaration.Controllers
         {
             var viewModel = new GenerateTaxDeclarationViewModel
             {
-                Company = "Filpride",
+                Company = "FILPRIDE",
                 CompanyChoices = new List<SelectListItem>
                 {
-                    new SelectListItem { Text = "Filpride", Value = "Filpride" }
+                    new SelectListItem { Text = "FILPRIDE", Value = "FILPRIDE" }
                 }
             };
 

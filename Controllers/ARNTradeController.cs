@@ -4,7 +4,7 @@ using TaxDeclaration.Models.ViewModels;
 
 namespace TaxDeclaration.Controllers
 {
-    public class FastController : Controller
+    public class ARNTradeController : Controller
     {
         // go to data folder(server)
         // copy the station, fastcv, fastledger, fastcoa, stationx from station(with recpos), taxdeclare, company(with recpos)
@@ -22,9 +22,9 @@ namespace TaxDeclaration.Controllers
                 Company = "MMSI",
                 CompanyChoices = new List<SelectListItem>
                 {
-                    new SelectListItem { Text = "MMSI", Value = "MMSI" },
-                    new SelectListItem { Text = "MOBILITY", Value = "MOBILITY" },
-                    new SelectListItem { Text = "SYVILL", Value = "SYVILL" }
+                    new SelectListItem { Text = "BIENES", Value = "BIENES" },
+                    new SelectListItem { Text = "MCY", Value = "MCY" },
+                    new SelectListItem { Text = "MNV PERSONAL", Value = "MNV PERSONAL" }
                 }
             };
 

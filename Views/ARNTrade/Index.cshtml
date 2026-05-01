@@ -1,0 +1,57 @@
+﻿@model TaxDeclaration.Models.ViewModels.GenerateTaxDeclarationViewModel
+
+@{
+    ViewData["Title"] = "ARNTrade Tax Declaration";
+}
+
+<div class="row text-light bg-secondary rounded shadow p-2 m-1">
+    <div class="col-6">
+        <h1>@ViewData["Title"]</h1>
+    </div>
+</div>
+
+<div class="card rounded shadow p-3 mt-3">
+    <div class="row">
+        <div class="col-12">
+            <form asp-action="Process">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <div class="row mt-3">
+                    <div class="col-6">
+                        <div class="form-group">
+                            <label asp-for="DateFrom" class="control-label"></label>
+                            <input type="date" asp-for="DateFrom" class="form-control" value="@DateOnly.FromDateTime(new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1).AddMonths(-1)).ToString("yyyy-MM-dd")" />
+                            <span asp-validation-for="DateFrom" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="form-group">
+                            <label asp-for="DateTo" class="control-label"></label>
+                            <input type="date" asp-for="DateTo" class="form-control" value="@DateOnly.FromDateTime(new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1).AddDays(-1)).ToString("yyyy-MM-dd")" />
+                            <span asp-validation-for="DateTo" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <label asp-for="SelectedCompany">Company</label>
+                        <select asp-for="SelectedCompany"
+                                asp-items="Model.CompanyChoices" class="form-control">
+                        </select>
+                    </div>
+                </div>
+                <div class="row mt-3 justify-content-end">
+                    <div class="col-auto">
+                        <div class="form-group">
+                            <input type="submit" value="Generate Excel" class="btn btn-primary" />
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <div class="form-group">
+                            <input type="submit" value="Generate PDF" class="btn btn-primary" />
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
