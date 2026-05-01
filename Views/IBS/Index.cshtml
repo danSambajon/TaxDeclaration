@@ -1,4 +1,6 @@
-﻿@{
+﻿@model TaxDeclaration.Models.ViewModels.GenerateTaxDeclarationViewModel
+
+@{
     ViewData["Title"] = "Index";
 }
 
@@ -14,20 +16,18 @@
             <form asp-action="Process">
                 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                 <div class="row">
-                    <div class="col-12">
+                    <div class="col-6">
                         <div class="form-group">
-                            @* <label asp-for="Question" class="control-label"></label>
-                            <input asp-for="Question" class="form-control" />
-                            <span asp-validation-for="Question" class="text-danger"></span> *@
+                            <label asp-for="DateFrom" class="control-label"></label>
+                            <input type="date" asp-for="DateFrom" class="form-control" value="@DateOnly.FromDateTime(new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1).AddMonths(-1))" />
+                            <span asp-validation-for="DateFrom" class="text-danger"></span>
                         </div>
                     </div>
-                </div>
-                <div class="row mt-3">
-                    <div class="col-12">
+                    <div class="col-6">
                         <div class="form-group">
-                            @* <label asp-for="Answer" class="control-label"></label>
-                            <input asp-for="Answer" class="form-control" />
-                            <span asp-validation-for="Answer" class="text-danger"></span> *@
+                            <label asp-for="DateTo" class="control-label"></label>
+                            <input type="date" asp-for="DateTo" class="form-control" value="@DateOnly.FromDateTime(new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1).AddDays(-1))" />
+                            <span asp-validation-for="DateTo" class="text-danger"></span>
                         </div>
                     </div>
                 </div>
