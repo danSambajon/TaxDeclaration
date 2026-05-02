@@ -2,7 +2,10 @@
 {
     public class DbfPaths
     {
+        public const string DataPath = @"\\192.168.0.253\System3\TaxDeclare\Data\";
+
         public const string StationPath = @"\\192.168.0.253\System3\TaxDeclare\Data\station.dbf";
+        public const string FastCvPath = @"\\192.168.0.253\System3\TaxDeclare\Data\fastcv.dbf";
 
         public const string Ewt2307DataPath = @"\\192.168.0.253\System3\BIR_Sys2307\Data\";
         public const string DcrMobilityDataPath = @"\\192.168.0.253\System3\DCR_Mobility\Data\";

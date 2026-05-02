@@ -35,6 +35,7 @@ namespace TaxDeclaration.Controllers
             try
             {
                 var stations = _dbfService.GetStationsFromDbf();
+                var fastCv = _dbfService.GetFastCvFromDbf();
             }
             catch (Exception ex)
             {
