@@ -1,4 +1,4 @@
-﻿namespace TaxDeclaration.Models
+﻿namespace TaxDeclaration.Utilities.Constants
 {
     public class DbfPaths
     {
