@@ -39,7 +39,7 @@ namespace TaxDeclaration.Services.Dbf
             return stations;
         }
 
-        public List<FastCv> GetFastCvFromDbf()
+        public List<FastCv> GetFastCvsFromDbf()
         {
             var fastCvs = new List<FastCv>();
             using var dbf = new DbfDataReader.DbfDataReader(DbfPaths.FastCvPath);
@@ -89,6 +89,28 @@ namespace TaxDeclaration.Services.Dbf
             }
 
             return fastCvs;
+        }
+
+
+        public List<Company> GetCompaniesFromDbf()
+        {
+            var companies = new List<Company>();
+            using var dbf = new DbfDataReader.DbfDataReader(DbfPaths.CompanyPath);
+
+            while (dbf.Read())
+            {
+                var company = new Company
+                {
+                    Code = dbf["CODE"]?.ToString(),
+                    BankCode = dbf["BANKCODE"]?.ToString(),
+                    Co = dbf["CO"]?.ToString(),
+                    BankName = dbf["BANKNAME"]?.ToString()
+                };
+
+                companies.Add(company);
+            }
+
+            return companies;
         }
     }
 }
