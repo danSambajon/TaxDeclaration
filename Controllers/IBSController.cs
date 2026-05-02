@@ -1,26 +1,16 @@
-﻿using DbfDataReader;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using OfficeOpenXml;
-using OfficeOpenXml.Style;
-using System.Data;
-using System.Threading;
-using TaxDeclaration.Data;
-using TaxDeclaration.Models;
 using TaxDeclaration.Models.ViewModels;
-using static System.Collections.Specialized.BitVector32;
 using TaxDeclaration.Services.Dbf;
 
 namespace TaxDeclaration.Controllers
 {
     public class IBSController : Controller
     {
-        private readonly ApplicationDbContext _dbContext;
         private readonly DbfService _dbfService;
 
-        public IBSController(ApplicationDbContext dbContext, DbfService dbfService)
+        public IBSController(DbfService dbfService)
         {
-            _dbContext = dbContext;
             _dbfService = dbfService;
         }
 
