@@ -50,14 +50,22 @@ namespace TaxDeclaration.Controllers
                 companies = _dbfService.GetCompaniesFromDbf();
 
                 checkVoucherHeaders = await _ibsConnectionService.GetCheckVoucherHeaders(viewModel.DateFrom, viewModel.DateTo);
+
+                if (checkVoucherHeaders.Count == 0)
+                {
+                    throw new NullReferenceException("No check voucher headers found for the specified date range.");
+                }
+
                 checkVoucherDetails = await _ibsConnectionService.GetCheckVoucherDetails(checkVoucherHeaders.Select(h => h.CheckVoucherHeaderNo).ToList());
                 chartOfAccounts = await _ibsConnectionService.GetChartOfAccounts();
             }
             catch (Exception ex)
             {
-                return Content(ex.Message);
+                TempData["error"] = $"Error: {ex.Message}";
+                return RedirectToAction(nameof(Index));
             }
 
+            TempData["success"] = "Success!";
             return RedirectToAction(nameof(Index));
         }
     }
