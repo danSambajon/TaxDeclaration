@@ -15,7 +15,7 @@ namespace TaxDeclaration.Services
             _configuration = configuration;
         }
 
-        public async Task<List<FilprideCheckVoucherHeader>> GetCheckVoucherHeaders ()
+        public async Task<List<FilprideCheckVoucherHeader>> GetCheckVoucherHeaders (DateOnly dateFrom, DateOnly dateTo)
         {
             var listOfEntries = new List<FilprideCheckVoucherHeader> ();
             var connString = _configuration.GetConnectionString("IBSConnection");
@@ -53,8 +53,8 @@ namespace TaxDeclaration.Services
 
             await using var cmd = new NpgsqlCommand(sql, conn);
 
-            cmd.Parameters.AddWithValue("startDate", new DateOnly(2025, 12, 1));
-            cmd.Parameters.AddWithValue("endDate", new DateOnly(2025, 12, 25));
+            cmd.Parameters.AddWithValue("startDate", dateFrom);
+            cmd.Parameters.AddWithValue("endDate", dateTo);
 
             await using var reader = await cmd.ExecuteReaderAsync();
             var schema = reader.GetColumnSchema();

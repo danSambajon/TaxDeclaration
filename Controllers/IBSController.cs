@@ -49,7 +49,7 @@ namespace TaxDeclaration.Controllers
                 fastCvs = _dbfService.GetFastCvsFromDbf();
                 companies = _dbfService.GetCompaniesFromDbf();
 
-                checkVoucherHeaders = await _ibsConnectionService.GetCheckVoucherHeaders();
+                checkVoucherHeaders = await _ibsConnectionService.GetCheckVoucherHeaders(viewModel.DateFrom, viewModel.DateTo);
                 checkVoucherDetails = await _ibsConnectionService.GetCheckVoucherDetails(checkVoucherHeaders.Select(h => h.CheckVoucherHeaderNo).ToList());
                 chartOfAccounts = await _ibsConnectionService.GetChartOfAccounts();
             }

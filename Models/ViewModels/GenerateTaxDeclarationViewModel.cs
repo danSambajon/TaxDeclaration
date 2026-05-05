@@ -6,7 +6,7 @@ namespace TaxDeclaration.Models.ViewModels
     public class GenerateTaxDeclarationViewModel
     {
         public DateOnly DateFrom { get; set; }
-        public DateTime DateTo { get; set; }
+        public DateOnly DateTo { get; set; }
         public string Company { get; set; }
         public string FileFormat { get; set; }
         public string? IBSCategory { get; set; }
