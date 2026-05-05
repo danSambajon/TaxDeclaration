@@ -158,7 +158,7 @@ namespace TaxDeclaration.Services
             var count = Convert.ToInt32(await countCmd.ExecuteScalarAsync());
 
             // Fields + sample data
-            var sql = $"SELECT * FROM public.\"{tableName}\" LIMIT 10";
+            var sql = $"SELECT * FROM public.\"{tableName}\"";
             await using var cmd = new NpgsqlCommand(sql, conn);
             await using var reader = await cmd.ExecuteReaderAsync();
             var schema = reader.GetColumnSchema();
