@@ -1,0 +1,44 @@
+﻿@if (TempData["success"] != null)
+{
+    <script>
+        Swal.fire(
+            'Success',
+            '@TempData["success"]',
+            'success'
+        )
+    </script>
+    TempData["success"] = null;
+}
+@if (TempData["error"] != null)
+{
+    <script>
+        Swal.fire(
+            'Success',
+            '@TempData["error"]',
+            'success'
+        )
+    </script>
+    TempData["error"] = null;
+}
+@if (TempData["info"] != null)
+{
+    <script>
+        Swal.fire(
+            'Success',
+            '@TempData["info"]',
+            'success'
+        )
+    </script>
+    TempData["info"] = null;
+}
+@if (TempData["warning"] != null)
+{
+    <script>
+        Swal.fire(
+            'Success',
+            '@TempData["warning"]',
+            'success'
+        )
+    </script>
+    TempData["warning"] = null;
+}
