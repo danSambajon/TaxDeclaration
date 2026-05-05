@@ -45,13 +45,13 @@ namespace TaxDeclaration.Controllers
 
             try
             {
-                stations = _dbfService.GetStationsFromDbf();
-                fastCvs = _dbfService.GetFastCvsFromDbf();
-                companies = _dbfService.GetCompaniesFromDbf();
+                //stations = _dbfService.GetStationsFromDbf();
+                //fastCvs = _dbfService.GetFastCvsFromDbf();
+                //companies = _dbfService.GetCompaniesFromDbf();
 
                 checkVoucherHeaders = await _ibsConnectionService.GetCheckVoucherHeaders();
-                checkVoucherDetails = await _ibsConnectionService.GetCheckVoucherDetails();
-                chartOfAccounts = await _ibsConnectionService.GetChartOfAccounts();
+                //checkVoucherDetails = await _ibsConnectionService.GetCheckVoucherDetails();
+                //chartOfAccounts = await _ibsConnectionService.GetChartOfAccounts();
             }
             catch (Exception ex)
             {

@@ -31,8 +31,33 @@ namespace TaxDeclaration.Services
             var count = Convert.ToInt32(await countCmd.ExecuteScalarAsync());
 
             // Fields + sample data
-            var sql = $"SELECT * FROM public.\"{tableName}\" LIMIT 10";
+            var sql = $@"
+                SELECT check_voucher_header_id,
+                check_voucher_header_no,
+                date,
+                cv_type,
+                type,
+                category,
+                reference,
+                particulars,
+                total,
+                check_no,
+                check_date,
+                bank_account_number,
+                payee,
+                created_by
+                FROM public.""{tableName}""
+                WHERE posted_by IS NOT NULL
+                AND date >= @startDate
+                AND date <= @endDate
+                LIMIT 10";
+
+
             await using var cmd = new NpgsqlCommand(sql, conn);
+
+            cmd.Parameters.AddWithValue("startDate", new DateOnly(2025, 12, 1));
+            cmd.Parameters.AddWithValue("endDate", new DateOnly(2025, 12, 25));
+
             await using var reader = await cmd.ExecuteReaderAsync();
             var schema = reader.GetColumnSchema();
 
@@ -46,55 +71,14 @@ namespace TaxDeclaration.Services
                     CvType = reader.IsDBNull("cv_type") ? null : reader.GetString("cv_type"),
                     Type = reader.IsDBNull("type") ? null : reader.GetString("type"),
                     Category = reader.IsDBNull("category") ? null : reader.GetString("category"),
-                    Status = reader.IsDBNull("status") ? null : reader.GetString("status"),
                     Reference = reader.IsDBNull("reference") ? null : reader.GetString("reference"),
                     Particulars = reader.IsDBNull("particulars") ? null : reader.GetString("particulars"),
-                    CancellationRemarks = reader.IsDBNull("cancellation_remarks") ? null : reader.GetString("cancellation_remarks"),
-                    OldCvNo = reader.IsDBNull("old_cv_no") ? null : reader.GetString("old_cv_no"),
-                    Company = reader.IsDBNull("company") ? null : reader.GetString("company"),
-                    RrNo = reader.IsDBNull("rr_no") ? null : reader.GetFieldValue<string[]>("rr_no"),
-                    SiNo = reader.IsDBNull("si_no") ? null : reader.GetFieldValue<string[]>("si_no"),
-                    PoNo = reader.IsDBNull("po_no") ? null : reader.GetFieldValue<string[]>("po_no"),
-                    Amount = reader.IsDBNull("amount") ? null : reader.GetFieldValue<decimal[]>("amount"),
                     Total = reader.IsDBNull("total") ? null : reader.GetDecimal("total"),
-                    CheckAmount = reader.IsDBNull("check_amount") ? null : reader.GetDecimal("check_amount"),
-                    AmountPaid = reader.IsDBNull("amount_paid") ? null : reader.GetDecimal("amount_paid"),
-                    InvoiceAmount = reader.IsDBNull("invoice_amount") ? null : reader.GetDecimal("invoice_amount"),
-                    TaxPercent = reader.IsDBNull("tax_percent") ? null : reader.GetDecimal("tax_percent"),
-                    TaxType = reader.IsDBNull("tax_type") ? null : reader.GetString("tax_type"),
-                    VatType = reader.IsDBNull("vat_type") ? null : reader.GetString("vat_type"),
-                    BankId = reader.IsDBNull("bank_id") ? null : reader.GetInt32("bank_id"),
                     CheckNo = reader.IsDBNull("check_no") ? null : reader.GetString("check_no"),
                     CheckDate = reader.IsDBNull("check_date") ? null : reader.GetFieldValue<DateOnly>("check_date"),
-                    BankAccountName = reader.IsDBNull("bank_account_name") ? null : reader.GetString("bank_account_name"),
                     BankAccountNumber = reader.IsDBNull("bank_account_number") ? null : reader.GetString("bank_account_number"),
-                    SupplierId = reader.IsDBNull("supplier_id") ? null : reader.GetInt32("supplier_id"),
-                    SupplierName = reader.IsDBNull("supplier_name") ? null : reader.GetString("supplier_name"),
                     Payee = reader.IsDBNull("payee") ? null : reader.GetString("payee"),
-                    Address = reader.IsDBNull("address") ? null : reader.GetString("address"),
-                    Tin = reader.IsDBNull("tin") ? null : reader.GetString("tin"),
-                    EmployeeId = reader.IsDBNull("employee_id") ? null : reader.GetInt32("employee_id"),
-                    SupportingFileSavedFileName = reader.IsDBNull("supporting_file_saved_file_name") ? null : reader.GetString("supporting_file_saved_file_name"),
-                    SupportingFileSavedUrl = reader.IsDBNull("supporting_file_saved_url") ? null : reader.GetString("supporting_file_saved_url"),
-                    DcpDate = reader.IsDBNull("dcp_date") ? null : reader.GetFieldValue<DateOnly>("dcp_date"),
-                    DcrDate = reader.IsDBNull("dcr_date") ? null : reader.GetFieldValue<DateOnly>("dcr_date"),
-                    LiquidationDate = reader.IsDBNull("liquidation_date") ? null : reader.GetFieldValue<DateOnly>("liquidation_date"),
-                    IsPaid = reader.GetBoolean("is_paid"),
-                    IsPrinted = reader.GetBoolean("is_printed"),
-                    IsAdvances = reader.GetBoolean("is_advances"),
-                    IsPayroll = reader.GetBoolean("is_payroll"),
-                    CreatedBy = reader.IsDBNull("created_by") ? null : reader.GetString("created_by"),
-                    CreatedDate = reader.IsDBNull("created_date") ? null : reader.GetDateTime("created_date"),
-                    EditedBy = reader.IsDBNull("edited_by") ? null : reader.GetString("edited_by"),
-                    EditedDate = reader.IsDBNull("edited_date") ? null : reader.GetDateTime("edited_date"),
-                    CanceledBy = reader.IsDBNull("canceled_by") ? null : reader.GetString("canceled_by"),
-                    CanceledDate = reader.IsDBNull("canceled_date") ? null : reader.GetDateTime("canceled_date"),
-                    VoidedBy = reader.IsDBNull("voided_by") ? null : reader.GetString("voided_by"),
-                    VoidedDate = reader.IsDBNull("voided_date") ? null : reader.GetDateTime("voided_date"),
-                    PostedBy = reader.IsDBNull("posted_by") ? null : reader.GetString("posted_by"),
-                    PostedDate = reader.IsDBNull("posted_date") ? null : reader.GetDateTime("posted_date"),
-                    ApprovedBy = reader.IsDBNull("approved_by") ? null : reader.GetString("approved_by"),
-                    ApprovedDate = reader.IsDBNull("approved_date") ? null : reader.GetDateTime("approved_date"),
+                    CreatedBy = reader.IsDBNull("created_by") ? null : reader.GetString("created_by")
                 };
 
                 listOfEntries.Add(header);
