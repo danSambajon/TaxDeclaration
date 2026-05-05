@@ -5,14 +5,30 @@ namespace TaxDeclaration.Services.Dbf
 {
     public class DbfService
     {
-        public List<Station> GetStationsFromDbf()
+        public List<FastStation> GetStationsFromDbf()
         {
-            var stations = new List<Station>();
+
+            var stations = new List<FastStation>();
+
+            if (!File.Exists(DbfPaths.StationPath))
+            {
+                throw new FileNotFoundException($"DBF not found: {DbfPaths.StationPath}");
+            }
+
             using var dbf = new DbfDataReader.DbfDataReader(DbfPaths.StationPath);
+
+            var recordsFound = dbf.DbfTable.Header.RecordCount;
+            var fields = dbf.DbfTable.Columns.Count;
+
+            if (dbf.DbfTable.Header.RecordCount == 0)
+            {
+                Console.WriteLine("DBF file has 0 records.");
+                throw new IndexOutOfRangeException("DBF file has 0 records.");
+            }
 
             while (dbf.Read())
             {
-                var station = new Station
+                var station = new FastStation
                 {
                     Company = dbf["COMPANY"]?.ToString(),
                     StnCode = dbf["STNCODE"]?.ToString(),
@@ -42,8 +58,16 @@ namespace TaxDeclaration.Services.Dbf
         public List<FastCv> GetFastCvsFromDbf()
         {
             var fastCvs = new List<FastCv>();
+
+            if (!File.Exists(DbfPaths.FastCvPath))
+            {
+                throw new FileNotFoundException($"DBF not found: {DbfPaths.FastCvPath}");
+            }
+
             using var dbf = new DbfDataReader.DbfDataReader(DbfPaths.FastCvPath);
-            var readStatus = dbf.Read();
+
+            var recordsFound = dbf.DbfTable.Header.RecordCount;
+            var fields = dbf.DbfTable.Columns.Count;
 
             while (dbf.Read())
             {
@@ -92,14 +116,23 @@ namespace TaxDeclaration.Services.Dbf
         }
 
 
-        public List<Company> GetCompaniesFromDbf()
+        public List<TaxDeclareCompany> GetCompaniesFromDbf()
         {
-            var companies = new List<Company>();
+            var companies = new List<TaxDeclareCompany>();
+
+            if (!File.Exists(DbfPaths.CompanyPath))
+            {
+                throw new FileNotFoundException($"DBF not found: {DbfPaths.CompanyPath}");
+            }
+
             using var dbf = new DbfDataReader.DbfDataReader(DbfPaths.CompanyPath);
+
+            var recordsFound = dbf.DbfTable.Header.RecordCount;
+            var fields = dbf.DbfTable.Columns.Count;
 
             while (dbf.Read())
             {
-                var company = new Company
+                var company = new TaxDeclareCompany
                 {
                     Code = dbf["CODE"]?.ToString(),
                     BankCode = dbf["BANKCODE"]?.ToString(),

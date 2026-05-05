@@ -1,6 +1,6 @@
 ﻿namespace TaxDeclaration.Models.ViewModels
 {
-    public class Station
+    public class FastStation
     {
         public string? Company {  get; set; }
         public string? StnCode { get; set; }
