@@ -50,7 +50,7 @@ namespace TaxDeclaration.Controllers
                 //companies = _dbfService.GetCompaniesFromDbf();
 
                 checkVoucherHeaders = await _ibsConnectionService.GetCheckVoucherHeaders();
-                //checkVoucherDetails = await _ibsConnectionService.GetCheckVoucherDetails();
+                checkVoucherDetails = await _ibsConnectionService.GetCheckVoucherDetails(checkVoucherHeaders.Select(h => h.CheckVoucherHeaderNo).ToList());
                 //chartOfAccounts = await _ibsConnectionService.GetChartOfAccounts();
             }
             catch (Exception ex)

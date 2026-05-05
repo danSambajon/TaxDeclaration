@@ -49,9 +49,7 @@ namespace TaxDeclaration.Services
                 FROM public.""{tableName}""
                 WHERE posted_by IS NOT NULL
                 AND date >= @startDate
-                AND date <= @endDate
-                LIMIT 10";
-
+                AND date <= @endDate";
 
             await using var cmd = new NpgsqlCommand(sql, conn);
 
@@ -87,7 +85,7 @@ namespace TaxDeclaration.Services
             return listOfEntries;
         }
 
-        public async Task<List<FilprideCheckVoucherDetail>> GetCheckVoucherDetails ()
+        public async Task<List<FilprideCheckVoucherDetail>> GetCheckVoucherDetails (List<string?>? cvHeaderTransNos)
         {
             var listOfEntries = new List<FilprideCheckVoucherDetail> ();
             var connString = _configuration.GetConnectionString("IBSConnection");
@@ -102,9 +100,26 @@ namespace TaxDeclaration.Services
             await using var countCmd = new NpgsqlCommand(countSql, conn);
             var count = Convert.ToInt32(await countCmd.ExecuteScalarAsync());
 
+            var transNos = cvHeaderTransNos?
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .ToArray();
+
             // Fields + sample data
-            var sql = $"SELECT * FROM public.\"{tableName}\" LIMIT 10";
+            var sql = $@"
+                SELECT check_voucher_detail_id,
+                account_no,
+                transaction_no, 
+                debit,
+                credit,
+                amount,
+                is_display_entry
+                FROM public.""{tableName}""
+                WHERE transaction_no = ANY(@transNos)";
+
             await using var cmd = new NpgsqlCommand(sql, conn);
+
+            cmd.Parameters.AddWithValue("transNos", transNos ?? Array.Empty<string>());
+
             await using var reader = await cmd.ExecuteReaderAsync();
             var schema = reader.GetColumnSchema();
 
@@ -114,25 +129,11 @@ namespace TaxDeclaration.Services
                 {
                     CheckVoucherDetailId = reader.IsDBNull("check_voucher_detail_id") ? null : reader.GetInt32("check_voucher_detail_id"),
                     AccountNo = reader.IsDBNull("account_no") ? null : reader.GetString("account_no"),
-                    AccountName = reader.IsDBNull("account_name") ? null : reader.GetString("account_name"),
                     TransactionNo = reader.IsDBNull("transaction_no") ? null : reader.GetString("transaction_no"),
                     Debit = reader.IsDBNull("debit") ? null : reader.GetDecimal("debit"),
                     Credit = reader.IsDBNull("credit") ? null : reader.GetDecimal("credit"),
-                    CheckVoucherHeaderId = reader.IsDBNull("check_voucher_header_id") ? null : reader.GetInt32("check_voucher_header_id"),
                     Amount = reader.IsDBNull("amount") ? null : reader.GetDecimal("amount"),
-                    AmountPaid = reader.IsDBNull("amount_paid") ? null : reader.GetDecimal("amount_paid"),
-                    SupplierId = reader.IsDBNull("supplier_id") ? null : reader.GetInt32("supplier_id"),
-                    EwtPercent = reader.IsDBNull("ewt_percent") ? null : reader.GetDecimal("ewt_percent"),
-                    IsUserSelected = reader.IsDBNull("is_user_selected") ? null : reader.GetBoolean("is_user_selected"),
-                    IsVatable = reader.IsDBNull("is_vatable") ? null : reader.GetBoolean("is_vatable"),
-                    BankId = reader.IsDBNull("bank_id") ? null : reader.GetInt32("bank_id"),
-                    CompanyId = reader.IsDBNull("company_id") ? null : reader.GetInt32("company_id"),
-                    CustomerId = reader.IsDBNull("customer_id") ? null : reader.GetInt32("customer_id"),
-                    EmployeeId = reader.IsDBNull("employee_id") ? null : reader.GetInt32("employee_id"),
                     IsDisplayEntry = reader.IsDBNull("is_display_entry") ? null : reader.GetBoolean("is_display_entry"),
-                    SubAccountType = reader.IsDBNull("sub_account_type") ? null : reader.GetInt32("sub_account_type"),
-                    SubAccountId = reader.IsDBNull("sub_account_id") ? null : reader.GetInt32("sub_account_id"),
-                    SubAccountName = reader.IsDBNull("sub_account_name") ? null : reader.GetString("sub_account_name"),
                 };
 
                 listOfEntries.Add(detail);
