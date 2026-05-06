@@ -1,14 +1,19 @@
-﻿using TaxDeclaration.Models.ViewModels;
+﻿using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Npgsql;
+using System.Data;
+using System.Data.OleDb;
+using TaxDeclaration.Models;
+using TaxDeclaration.Models.ViewModels;
 using TaxDeclaration.Utilities.Constants;
 
 namespace TaxDeclaration.Services.Dbf
 {
     public class DbfService
     {
-        public List<FastStation> GetStationsFromDbf()
+        public List<FastStationViewModel> GetStationsFromDbf()
         {
 
-            var stations = new List<FastStation>();
+            var stations = new List<FastStationViewModel>();
 
             if (!File.Exists(DbfPaths.StationPath))
             {
@@ -28,7 +33,7 @@ namespace TaxDeclaration.Services.Dbf
 
             while (dbf.Read())
             {
-                var station = new FastStation
+                var station = new FastStationViewModel
                 {
                     Company = dbf["COMPANY"]?.ToString(),
                     StnCode = dbf["STNCODE"]?.ToString(),
@@ -55,9 +60,9 @@ namespace TaxDeclaration.Services.Dbf
             return stations;
         }
 
-        public List<FastCv> GetFastCvsFromDbf()
+        public List<FastCvViewModel> GetFastCvsFromDbf()
         {
-            var fastCvs = new List<FastCv>();
+            var fastCvs = new List<FastCvViewModel>();
 
             if (!File.Exists(DbfPaths.FastCvPath))
             {
@@ -71,7 +76,7 @@ namespace TaxDeclaration.Services.Dbf
 
             while (dbf.Read())
             {
-                var fastCv = new FastCv
+                var fastCv = new FastCvViewModel
                 {
                     Station = dbf["STATION"]?.ToString(),
                     Trans_no = dbf["TRANS_NO"]?.ToString(),
@@ -115,10 +120,9 @@ namespace TaxDeclaration.Services.Dbf
             return fastCvs;
         }
 
-
-        public List<TaxDeclareCompany> GetCompaniesFromDbf()
+        public List<TaxDeclareCompanyViewModel> GetCompaniesFromDbf()
         {
-            var companies = new List<TaxDeclareCompany>();
+            var companies = new List<TaxDeclareCompanyViewModel>();
 
             if (!File.Exists(DbfPaths.CompanyPath))
             {
@@ -132,7 +136,7 @@ namespace TaxDeclaration.Services.Dbf
 
             while (dbf.Read())
             {
-                var company = new TaxDeclareCompany
+                var company = new TaxDeclareCompanyViewModel
                 {
                     Code = dbf["CODE"]?.ToString(),
                     BankCode = dbf["BANKCODE"]?.ToString(),
@@ -144,6 +148,39 @@ namespace TaxDeclaration.Services.Dbf
             }
 
             return companies;
+        }
+
+        public List<DCRMainDisbursementViewModel> GetDCRMainDisbursementsFromDbf()
+        {
+            var disbursements = new List<DCRMainDisbursementViewModel>();
+            using var conn = new OleDbConnection($"Provider=VFPOLEDB.1;Data Source={DbfPaths.DcrMainCashflowDBPath}");
+
+            try
+            {
+                conn.Open();
+
+                using var countCommand = conn.CreateCommand();
+                countCommand.CommandText = "SELECT COUNT(*) FROM disbursement";
+                var count = Convert.ToInt32(countCommand.ExecuteScalar()); // sync, not async
+
+                using var command = conn.CreateCommand();
+                command.CommandText = "SELECT * FROM disbursement";
+                using var reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    var disbursement = new DCRMainDisbursementViewModel
+                    {
+                        // map columns...
+                    };
+                    disbursements.Add(disbursement);
+                }
+            }
+            finally
+            {
+                if (conn.State == ConnectionState.Open)
+                    conn.Close();
+            }
+            return disbursements;
         }
     }
 }

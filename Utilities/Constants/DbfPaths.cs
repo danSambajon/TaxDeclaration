@@ -7,6 +7,7 @@
         public const string StationPath = @"\\192.168.0.253\System3\TaxDeclare\Data\station.dbf";
         public const string CompanyPath = @"\\192.168.0.253\System3\TaxDeclare\Data\company.dbf";
         public const string FastCvPath = @"\\192.168.0.253\System3\TaxDeclare\Data\fastcv.dbf";
+        public const string DcrMainCashflowDBPath = @"\\192.168.0.253\System3\DCR_Main\Data\cashflow.dbc";
 
         public const string Ewt2307DataPath = @"\\192.168.0.253\System3\BIR_Sys2307\Data\";
         public const string DcrMobilityDataPath = @"\\192.168.0.253\System3\DCR_Mobility\Data\";

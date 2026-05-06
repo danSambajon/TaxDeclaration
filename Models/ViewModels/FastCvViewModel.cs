@@ -1,6 +1,6 @@
 ﻿namespace TaxDeclaration.Models.ViewModels
 {
-    public class FastCv
+    public class FastCvViewModel
     {
         public string? Station {  get; set; }
         public string? Trans_no {  get; set; }

@@ -1,6 +1,6 @@
 ﻿namespace TaxDeclaration.Models.ViewModels
 {
-    public class TaxDeclareCompany
+    public class TaxDeclareCompanyViewModel
     {
         public string? Code { get; set; }
         public string? BankCode { get; set; }

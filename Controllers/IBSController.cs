@@ -35,22 +35,31 @@ namespace TaxDeclaration.Controllers
 
         public async Task<IActionResult> Process(GenerateTaxDeclarationViewModel viewModel, CancellationToken cancellationToken)
         {
-            var stations = _dbfService.GetStationsFromDbf();
-            var fastCvs = _dbfService.GetFastCvsFromDbf();
-            var companies = _dbfService.GetCompaniesFromDbf();
+            #region == Initialize Data Containers ==
+
+            var stations = new List<FastStationViewModel>();
+            var fastCvs = new List<FastCvViewModel>();
+            var companies = new List<TaxDeclareCompanyViewModel>();
+            var dcrMainDisbursements = new List<DCRMainDisbursementViewModel>();
 
             var checkVoucherHeaders = new List<FilprideCheckVoucherHeader>();
             var checkVoucherDetails = new List<FilprideCheckVoucherDetail>();
             var chartOfAccounts = new List<FilprideChartOfAccount>();
 
+
+            #endregion == Initialize Data Containers ==
+
+
             try
             {
+                // Get data from DBF files
                 stations = _dbfService.GetStationsFromDbf();
                 fastCvs = _dbfService.GetFastCvsFromDbf();
                 companies = _dbfService.GetCompaniesFromDbf();
+                //dcrMainDisbursements = _dbfService.GetDCRMainDisbursementsFromDbf();
 
+                // Get data from IBS
                 checkVoucherHeaders = await _ibsConnectionService.GetCheckVoucherHeaders(viewModel.DateFrom, viewModel.DateTo);
-
                 if (checkVoucherHeaders.Count == 0)
                 {
                     throw new NullReferenceException("No check voucher headers found for the specified date range.");
@@ -58,14 +67,14 @@ namespace TaxDeclaration.Controllers
 
                 checkVoucherDetails = await _ibsConnectionService.GetCheckVoucherDetails(checkVoucherHeaders.Select(h => h.CheckVoucherHeaderNo).ToList());
                 chartOfAccounts = await _ibsConnectionService.GetChartOfAccounts();
+
+                TempData["success"] = "Success!";
             }
             catch (Exception ex)
             {
-                TempData["error"] = $"Error: {ex.Message}";
-                return RedirectToAction(nameof(Index));
+                TempData["error"] = ex.Message;
             }
 
-            TempData["success"] = "Success!";
             return RedirectToAction(nameof(Index));
         }
     }
