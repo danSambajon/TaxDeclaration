@@ -26,5 +26,7 @@ namespace TaxDeclaration.Models
 
         // Audit Trail
         public string? CreatedBy { get; set; }
+
+        public List<FilprideCheckVoucherDetail> Details { get; set; } = new List<FilprideCheckVoucherDetail>();
     }
 }
