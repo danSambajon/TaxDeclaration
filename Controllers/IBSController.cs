@@ -35,7 +35,7 @@ namespace TaxDeclaration.Controllers
 
         public async Task<IActionResult> Process(GenerateTaxDeclarationViewModel viewModel, CancellationToken cancellationToken)
         {
-            #region == Initialize Data Containers ==
+            #region == Initialize data containers ==
 
             var stations = new List<FastStationViewModel>();
             var fastCvs = new List<FastCvViewModel>();
@@ -46,18 +46,19 @@ namespace TaxDeclaration.Controllers
             var checkVoucherDetails = new List<FilprideCheckVoucherDetail>();
             var chartOfAccounts = new List<FilprideChartOfAccount>();
 
-            #endregion == Initialize Data Containers ==
+            #endregion == Initialize data containers ==
 
 
             try
             {
+                #region == Getting data from sources ==
+
                 // Get data from DBF files
                 //stations = _dbfService.GetStationsFromDbf();
                 //fastCvs = _dbfService.GetFastCvsFromDbf();
                 companies = _dbfService.GetCompaniesFromDbf();
                 //dcrMainDisbursements = _dbfService.GetDCRMainDisbursementsFromDbf();
 
-                // 
 
                 // Get data from IBS
                 checkVoucherHeaders = await _ibsConnectionService
@@ -74,50 +75,25 @@ namespace TaxDeclaration.Controllers
                 chartOfAccounts = await _ibsConnectionService
                     .GetChartOfAccounts();
 
-                
+                #endregion == Getting data from sources ==
 
-                // ASSIGN DETAILS TO HEADERS
-                var cvHeadersWithDetails = new List<FilprideCheckVoucherHeader>();
+                #region == Data Processing ==
 
                 foreach (FilprideCheckVoucherHeader header in checkVoucherHeaders)
                 {
-                    var selectedHeader = header;
-                    selectedHeader.Details = checkVoucherDetails.Where(d => d.TransactionNo == header.CheckVoucherHeaderNo).ToList();
-                    selectedHeader.Referenced = checkVoucherDetails.Where(d => d.TransactionNo == header.Reference).ToList();
-                    cvHeadersWithDetails.Add(selectedHeader);
+                    header.Details = checkVoucherDetails.Where(d => d.TransactionNo == header.CheckVoucherHeaderNo).ToList();
+                    header.Referenced = checkVoucherDetails.Where(d => d.TransactionNo == header.Reference).ToList();
                 }
-
-
-
-                // ASSIGN HEADER TO DETAILS(transno)
-                var cvDetailsWithHeader = new List<FilprideCheckVoucherDetail>();
-                var cvDetailsWithoutHeader = new List<FilprideCheckVoucherDetail>();
 
                 foreach (FilprideCheckVoucherDetail detail in checkVoucherDetails)
                 {
-                    var selectedDetail = detail;
-                    selectedDetail.Header = checkVoucherHeaders.Where(h => h.CheckVoucherHeaderNo == detail.TransactionNo).FirstOrDefault();
+                    detail.Header = checkVoucherHeaders.Where(h => h.CheckVoucherHeaderNo == detail.TransactionNo).FirstOrDefault();
 
-                    if (selectedDetail.Header == null)
+                    if (detail.Header != null)
                     {
-                        cvDetailsWithoutHeader.Add(selectedDetail);
-                    }
-                    else
-                    {
-                        selectedDetail.CompanyVm = companies.Where(c => c.BankCode == selectedDetail.Header.BankAccountNumber).FirstOrDefault();
-                        cvDetailsWithHeader.Add(selectedDetail);
+                        detail.CompanyVm = companies.Where(c => c.BankCode == detail.Header.BankAccountNumber).FirstOrDefault();
                     }
                 }
-
-
-
-                // CHECKING VALUES
-                var headersWithNoDetails = cvHeadersWithDetails.Where(h => h.Details.Count == 0).ToList();
-                var headerWithDetails = checkVoucherHeaders.Where(h => h.Details.Count > 0).ToList();
-                var detailsRegistered = checkVoucherHeaders.Sum(h => h.Details.Count);
-                var headerCount = checkVoucherHeaders.Count;
-
-
 
                 var cvHeaderx = checkVoucherHeaders
                     .Select(h => new
@@ -145,14 +121,11 @@ namespace TaxDeclaration.Controllers
                     })
                     .ToList();
 
-
-
                 var cvNoFromcvheaderx = cvHeaderx.Select(h => h.CvNo).ToList();
                 var referenceFromcvheaderx = cvHeaderx.Select(h => h.Reference).ToList();
 
                 var cvDetailx = checkVoucherDetails
-                    .Where(d => !d.IsDisplayEntry 
-                    && (cvNoFromcvheaderx.Contains(d.TransactionNo!.Trim()) || referenceFromcvheaderx.Contains(d.TransactionNo!.Trim())))
+                    .Where(d => !d.IsDisplayEntry && (cvNoFromcvheaderx.Contains(d.TransactionNo!.Trim()) || referenceFromcvheaderx.Contains(d.TransactionNo!.Trim())))
                     .Select(d => new
                     {
                         CvNo = d.TransactionNo,
@@ -163,11 +136,9 @@ namespace TaxDeclaration.Controllers
                         d.IsDisplayEntry,
                         d.Header
                     })
-                        .ToList();
-
+                    .ToList();
 
                 var bankCodesOfCvDetailx = cvDetailx.Select(d => d.Header.BankAccountNumber).Distinct().ToList();
-
 
                 // DETAILS: VAT INPUT AND GOVERNMENT PAYABLES 
                 var temp = cvDetailx
@@ -176,7 +147,6 @@ namespace TaxDeclaration.Controllers
                     .Select(d => d.CvNo)
                     .Distinct()
                     .ToList();
-
 
                 // DETAILS(GROUPED): VAT INPUT AND GOVERNMENT PAYABLES
                 var temp2 = cvDetailx
@@ -192,7 +162,6 @@ namespace TaxDeclaration.Controllers
                     })
                     .OrderByDescending(g => g.Ctr)
                     .ToList();
-
 
                 // DETAILS + HEADER: WITH EMPTY FIELDS
                 var curcvheader = temp2
@@ -236,7 +205,6 @@ namespace TaxDeclaration.Controllers
                     })
                     .ToList();
 
-
                 var cvDetailGroup = cvDetailx
                     .Where(d => temp.Contains(d.CvNo))
                     .GroupBy(d => new
@@ -258,7 +226,6 @@ namespace TaxDeclaration.Controllers
                     .ThenBy(x => x.SeqId)
                     .ToList();
 
-
                 var cvDetailGroup2 = cvDetailx
                     .Where(d => temp.Contains(d.CvNo))
                     .OrderBy(d =>  d.CvNo )
@@ -274,7 +241,6 @@ namespace TaxDeclaration.Controllers
                     })
                     .ToList();
 
-
                 var detail_accounts = cvDetailGroup
                     .Select(d => new
                     {
@@ -286,7 +252,6 @@ namespace TaxDeclaration.Controllers
                     .Distinct()
                     .OrderBy(d => d.Acctcd)
                     .ToList();
-
 
                 var acctgroup = detail_accounts
                     .GroupBy(d => new
@@ -305,25 +270,7 @@ namespace TaxDeclaration.Controllers
 
 
 
-
-
-
-
-
-
-                foreach (FilprideCheckVoucherDetail detail in checkVoucherDetails)
-                {
-                    var headers = checkVoucherHeaders.Where(h => h.CheckVoucherHeaderNo == detail.TransactionNo || h.Reference == detail.TransactionNo).ToList();
-
-
-
-                    if (headers.Where(h => h.CvType == "Payment").FirstOrDefault() != null)
-                    {
-
-                    }
-
-                    detail.Header = headers.FirstOrDefault();
-                }
+                #endregion == Data Processing ==
 
                 TempData["success"] = "Success!";
             }
