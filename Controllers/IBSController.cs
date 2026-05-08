@@ -95,6 +95,7 @@ namespace TaxDeclaration.Controllers
                     }
                 }
 
+                // Verified
                 var cvHeaderx = checkVoucherHeaders
                     .Select(h => new
                     {
@@ -124,6 +125,7 @@ namespace TaxDeclaration.Controllers
                 var cvNoFromcvheaderx = cvHeaderx.Select(h => h.CvNo).ToList();
                 var referenceFromcvheaderx = cvHeaderx.Select(h => h.Reference).ToList();
 
+                // Verified
                 var cvDetailx = checkVoucherDetails
                     .Where(d => !d.IsDisplayEntry && (cvNoFromcvheaderx.Contains(d.TransactionNo!.Trim()) || referenceFromcvheaderx.Contains(d.TransactionNo!.Trim())))
                     .Select(d => new
@@ -140,6 +142,7 @@ namespace TaxDeclaration.Controllers
 
                 var bankCodesOfCvDetailx = cvDetailx.Select(d => d.Header.BankAccountNumber).Distinct().ToList();
 
+                // Verified
                 // DETAILS: VAT INPUT AND GOVERNMENT PAYABLES 
                 var temp = cvDetailx
                     .Where(d => d.Acctcd.StartsWith("101060200") || d.Acctcd.StartsWith("201030"))
@@ -148,6 +151,7 @@ namespace TaxDeclaration.Controllers
                     .Distinct()
                     .ToList();
 
+                // Verified
                 // DETAILS(GROUPED): VAT INPUT AND GOVERNMENT PAYABLES
                 var temp2 = cvDetailx
                     .Where(d => d.Acctcd.StartsWith("101060200") || d.Acctcd.StartsWith("201030"))
@@ -163,6 +167,7 @@ namespace TaxDeclaration.Controllers
                     .OrderByDescending(g => g.Ctr)
                     .ToList();
 
+                // Verified
                 // DETAILS + HEADER: WITH EMPTY FIELDS
                 var curcvheader = temp2
                     .Select(d => new
@@ -205,6 +210,7 @@ namespace TaxDeclaration.Controllers
                     })
                     .ToList();
 
+                // Verified
                 var cvDetailGroup = cvDetailx
                     .Where(d => temp.Contains(d.CvNo))
                     .GroupBy(d => new
@@ -226,6 +232,7 @@ namespace TaxDeclaration.Controllers
                     .ThenBy(x => x.SeqId)
                     .ToList();
 
+                // Verified
                 var cvDetailGroup2 = cvDetailx
                     .Where(d => temp.Contains(d.CvNo))
                     .OrderBy(d =>  d.CvNo )
@@ -241,18 +248,20 @@ namespace TaxDeclaration.Controllers
                     })
                     .ToList();
 
+                // Verified
                 var detail_accounts = cvDetailGroup
                     .Select(d => new
                     {
                         d.DrCr,
                         d.Acctcd,
-                        Coa = chartOfAccounts.Where(coa => coa.AccountNumber == d.Acctcd).FirstOrDefault().AccountName,
+                        AcctName = chartOfAccounts.Where(coa => coa.AccountNumber == d.Acctcd).FirstOrDefault().AccountName,
                         ColNum = (decimal)0
                     })
                     .Distinct()
                     .OrderBy(d => d.Acctcd)
                     .ToList();
 
+                // Verified
                 var acctgroup = detail_accounts
                     .GroupBy(d => new
                     {
@@ -267,6 +276,47 @@ namespace TaxDeclaration.Controllers
                         Colnum = (decimal)0
                     })
                     .ToList();
+
+                var cventries = curcvheader
+                    .Select(h => new
+                    {
+                        h.Header.CvNo,
+                        h.Header.TranDate,
+                        h.Header.Payee,
+                        h.Header.BankCode,
+                        h.Header.BankName,
+                        CvAmount = h.Header.Amount,
+                        h.Header.CheckNo,
+                        h.Header.CheckDate,
+                        h.Header.BsNo,
+                        h.Header.ChkClear,
+                        h.Header.Particulars,
+                        cvDetailGroup.Where(d => d.CvNo == h.Header.CvNo || h.Header.Reference == d.CvNo).FirstOrDefault().Amount,
+                        cvDetailGroup.Where(d => d.CvNo == h.Header.CvNo || h.Header.Reference == d.CvNo).FirstOrDefault().Acctcd,
+                        detail_accounts.Where(a => a.Acctcd == cvDetailGroup.Where(d => d.CvNo == h.Header.CvNo).FirstOrDefault().Acctcd || a.DrCr == cvDetailGroup.Where(d => d.CvNo == h.Header.CvNo).FirstOrDefault().DrCr).FirstOrDefault().AcctName,
+                        detail_accounts.Where(a => a.Acctcd == cvDetailGroup.Where(d => d.CvNo == h.Header.CvNo).FirstOrDefault().Acctcd || a.DrCr == cvDetailGroup.Where(d => d.CvNo == h.Header.CvNo).FirstOrDefault().DrCr).FirstOrDefault().ColNum,
+                        h.Header.Reference
+                    })
+                    .OrderBy(h => h.CvNo)
+                    .ThenBy(h => h.AcctName)
+                    .ToList();
+
+                var cventries2 = curcvheader
+                    .Select(d => new
+                    {
+                        d.Header.CvNo,
+                        d.Header.TranDate,
+                        d.Header.Payee,
+                        d.Header.BankCode,
+                        d.Header.BankName,
+                        CvAmount = d.Header.Amount,
+                        d.Header.CheckNo,
+                        d.Header.CheckDate,
+                        d.Header.BsNo,
+                        d.Header.ChkClear
+                    })
+                    .ToArray();
+
 
 
 
