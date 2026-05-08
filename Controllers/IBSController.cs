@@ -208,6 +208,7 @@ namespace TaxDeclaration.Controllers
                         LedgerDesc = (string)null,
                         RowNum = (string)null
                     })
+                    .Where(d => d.Header.TranDate >= viewModel.DateFrom && d.Header.TranDate <= viewModel.DateTo)
                     .ToList();
 
                 // Verified
@@ -277,32 +278,15 @@ namespace TaxDeclaration.Controllers
                     })
                     .ToList();
 
-                var cventries = curcvheader
-                    .Select(h => new
-                    {
-                        h.Header.CvNo,
-                        h.Header.TranDate,
-                        h.Header.Payee,
-                        h.Header.BankCode,
-                        h.Header.BankName,
-                        CvAmount = h.Header.Amount,
-                        h.Header.CheckNo,
-                        h.Header.CheckDate,
-                        h.Header.BsNo,
-                        h.Header.ChkClear,
-                        h.Header.Particulars,
-                        cvDetailGroup.Where(d => d.CvNo == h.Header.CvNo || h.Header.Reference == d.CvNo).FirstOrDefault().Amount,
-                        cvDetailGroup.Where(d => d.CvNo == h.Header.CvNo || h.Header.Reference == d.CvNo).FirstOrDefault().Acctcd,
-                        detail_accounts.Where(a => a.Acctcd == cvDetailGroup.Where(d => d.CvNo == h.Header.CvNo).FirstOrDefault().Acctcd || a.DrCr == cvDetailGroup.Where(d => d.CvNo == h.Header.CvNo).FirstOrDefault().DrCr).FirstOrDefault().AcctName,
-                        detail_accounts.Where(a => a.Acctcd == cvDetailGroup.Where(d => d.CvNo == h.Header.CvNo).FirstOrDefault().Acctcd || a.DrCr == cvDetailGroup.Where(d => d.CvNo == h.Header.CvNo).FirstOrDefault().DrCr).FirstOrDefault().ColNum,
-                        h.Header.Reference
-                    })
-                    .OrderBy(h => h.CvNo)
-                    .ThenBy(h => h.AcctName)
-                    .ToList();
-
-                var cventries2 = curcvheader
-                    .Select(d => new
+                // Verified
+                var cventriesv2 = (from d in curcvheader
+                    join h in cvDetailGroup on d.Header.CvNo equals h.CvNo
+                    join a in detail_accounts
+                        on new { AcctCd = h.Acctcd.Trim(), DrCr = h.DrCr }
+                        equals new { AcctCd = a.Acctcd.Trim(), DrCr = a.DrCr }
+                        into leftJoin
+                    from c in leftJoin.DefaultIfEmpty()
+                    select new
                     {
                         d.Header.CvNo,
                         d.Header.TranDate,
@@ -313,9 +297,53 @@ namespace TaxDeclaration.Controllers
                         d.Header.CheckNo,
                         d.Header.CheckDate,
                         d.Header.BsNo,
-                        d.Header.ChkClear
+                        d.Header.ChkClear,
+                        d.Header.Particulars,
+                        h.Amount,
+                        h.DrCr,
+                        h.Acctcd,
+                        c.AcctName,
+                        c.ColNum,
+                        d.Header.Reference
                     })
-                    .ToArray();
+                    .OrderBy(h => h.CvNo)
+                    .ThenBy(h => h.AcctName)
+                    .ToList();
+
+                // Verified
+                var cvEntries2 = (from a in curcvheader
+                    from b in cvDetailGroup2
+                    where a.Header.CvNo == b.CvNo || a.Header.Reference == b.CvNo
+                    join c in detail_accounts
+                        on new { AcctCd = b.Acctcd.Trim(), DrCr = b.DrCr }
+                        equals new { AcctCd = c.Acctcd.Trim(), DrCr = c.DrCr }
+                        into leftJoin
+                    from c in leftJoin.DefaultIfEmpty()
+                    select new
+                    {
+                        a.Header.CvNo,
+                        a.Header.TranDate,
+                        a.Header.Payee,
+                        a.Header.BankCode,
+                        a.Header.BankName,
+                        CvAmount = a.Header.Amount,
+                        a.Header.CheckNo,
+                        a.Header.CheckDate,
+                        a.Header.BsNo,
+                        a.Header.ChkClear,
+                        a.Header.Particulars,
+                        a.Header.Reference,
+                        a.Header.Category,
+                        BAmount = b.Amount,
+                        b.DrCr,
+                        b.Acctcd,
+                        b.SeqId,
+                        AcctName = c != null ? c.AcctName : null,
+                        ColNum = c != null ? c.ColNum : 0,
+                    })
+                    .OrderBy(x => x.CvNo)
+                    .ThenBy(x => x.ColNum)
+                    .ToList();
 
 
 
