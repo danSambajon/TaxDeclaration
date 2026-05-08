@@ -48,7 +48,6 @@ namespace TaxDeclaration.Controllers
 
             #endregion == Initialize data containers ==
 
-
             try
             {
                 #region == Getting data from sources ==
@@ -57,8 +56,7 @@ namespace TaxDeclaration.Controllers
                 //stations = _dbfService.GetStationsFromDbf();
                 //fastCvs = _dbfService.GetFastCvsFromDbf();
                 companies = _dbfService.GetCompaniesFromDbf();
-                //dcrMainDisbursements = _dbfService.GetDCRMainDisbursementsFromDbf();
-
+                dcrMainDisbursements = _dbfService.GetDCRMainDisbursementsFromDbf();
 
                 // Get data from IBS
                 checkVoucherHeaders = await _ibsConnectionService

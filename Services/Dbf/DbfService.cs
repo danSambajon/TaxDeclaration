@@ -1,10 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Microsoft.VisualBasic;
 using Npgsql;
 using System.Data;
 using System.Data.OleDb;
 using TaxDeclaration.Models;
 using TaxDeclaration.Models.ViewModels;
 using TaxDeclaration.Utilities.Constants;
+using static TaxDeclaration.Models.ViewModels.DCRMainDisbursementViewModel;
 
 namespace TaxDeclaration.Services.Dbf
 {
@@ -152,35 +154,34 @@ namespace TaxDeclaration.Services.Dbf
 
         public List<DCRMainDisbursementViewModel> GetDCRMainDisbursementsFromDbf()
         {
-            var disbursements = new List<DCRMainDisbursementViewModel>();
-            using var conn = new OleDbConnection($"Provider=VFPOLEDB.1;Data Source={DbfPaths.DcrMainCashflowDBPath}");
+            var records = new List<DCRMainDisbursementViewModel>();
 
-            try
+            if (!File.Exists(DbfPaths.DcrMainDisbursementDBPath))
+                throw new FileNotFoundException($"DBF not found: {DbfPaths.DcrMainDisbursementDBPath}");
+
+            using var dbf = new DbfDataReader.DbfDataReader(DbfPaths.DcrMainDisbursementDBPath);
+
+            while (dbf.Read())
             {
-                conn.Open();
-
-                using var countCommand = conn.CreateCommand();
-                countCommand.CommandText = "SELECT COUNT(*) FROM disbursement";
-                var count = Convert.ToInt32(countCommand.ExecuteScalar()); // sync, not async
-
-                using var command = conn.CreateCommand();
-                command.CommandText = "SELECT * FROM disbursement";
-                using var reader = command.ExecuteReader();
-                while (reader.Read())
+                if (dbf["CASHPODATE"] != null || dbf["DCRDATE"] != null)
                 {
-                    var disbursement = new DCRMainDisbursementViewModel
+                    var record = new DCRMainDisbursementViewModel
                     {
-                        // map columns...
+                        StnCode = dbf["STNCODE"]?.ToString(),
+                        AccountNo = dbf["ACCOUNTNO"]?.ToString(),
+                        CashPoDate = ToDate(dbf["CASHPODATE"]),
+                        DcrDate = ToDate(dbf["DCRDATE"])
                     };
-                    disbursements.Add(disbursement);
+
+                    records.Add(record);
                 }
             }
-            finally
-            {
-                if (conn.State == ConnectionState.Open)
-                    conn.Close();
-            }
-            return disbursements;
+
+            return records;
         }
+
+        private static DateTime? ToDate(object value) =>
+            value != null && value != DBNull.Value && DateTime.TryParse(value.ToString(), out var d)
+                ? d : null;
     }
 }
