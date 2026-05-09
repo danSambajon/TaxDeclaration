@@ -3,6 +3,7 @@ using Microsoft.VisualBasic;
 using Npgsql;
 using System.Data;
 using System.Data.OleDb;
+using System.Text;
 using TaxDeclaration.Models;
 using TaxDeclaration.Models.ViewModels;
 using TaxDeclaration.Utilities.Constants;
@@ -156,10 +157,10 @@ namespace TaxDeclaration.Services.Dbf
         {
             var records = new List<DCRMainDisbursementViewModel>();
 
-            if (!File.Exists(DbfPaths.DcrMainDisbursementDBPath))
-                throw new FileNotFoundException($"DBF not found: {DbfPaths.DcrMainDisbursementDBPath}");
+            if (!File.Exists(DbfPaths.DcrMainDisbursementDbfPath))
+                throw new FileNotFoundException($"DBF not found: {DbfPaths.DcrMainDisbursementDbfPath}");
 
-            using var dbf = new DbfDataReader.DbfDataReader(DbfPaths.DcrMainDisbursementDBPath);
+            using var dbf = new DbfDataReader.DbfDataReader(DbfPaths.DcrMainDisbursementDbfPath);
 
             while (dbf.Read())
             {
@@ -180,8 +181,265 @@ namespace TaxDeclaration.Services.Dbf
             return records;
         }
 
+        public void GetBirSysFromDbf()
+        {
+            var twoThreeOSeven = GetTwoThreeOSeven();
+        }
+
+        public List<TwoThreeOSevenViewModel> GetTwoThreeOSeven()
+        {
+            var twoThreeOSeven = new List<TwoThreeOSevenViewModel>();
+            var problematicRows = new List<(int Row, string Error)>();
+
+            if (!File.Exists(DbfPaths.Ewt2307TwoThreeOSevenDbfPath))
+                throw new FileNotFoundException($"DBF not found: {DbfPaths.Ewt2307TwoThreeOSevenDbfPath}");
+
+            // =============================================
+            // PASS 1 — Normal read, collect problematic row numbers
+            // =============================================
+            using (var dbf1 = new DbfDataReader.DbfDataReader(DbfPaths.Ewt2307TwoThreeOSevenDbfPath))
+            {
+                int row = 0;
+                while (true)
+                {
+                    row++;
+                    bool hasRow;
+
+                    try
+                    {
+                        hasRow = dbf1.Read();
+                    }
+                    catch (Exception ex)
+                    {
+                        problematicRows.Add((row, ex.Message));
+                        continue;
+                    }
+
+                    if (!hasRow) break;
+
+                    try
+                    {
+                        var record = new TwoThreeOSevenViewModel
+                        {
+                            RecId = int.Parse(dbf1["RECID"]?.ToString()),
+                            ControlNum = dbf1["CONTROLNUM"]?.ToString(),
+                            DateFrom = ToDate(dbf1["DATEFROM"]),
+                            DateTo = ToDate(dbf1["DATETO"]),
+                            VoucherNo = dbf1["VOUCHER_NO"]?.ToString(),
+                            CvNo = dbf1["CVNO"]?.ToString(),
+                            PayeeCode = dbf1["PAYEECODE"]?.ToString(),
+                            AtcCode = dbf1["ATC_CODE"]?.ToString(),
+                            Total = decimal.TryParse(dbf1["TOTAL"]?.ToString(), out var total) ? total : (decimal?)null,
+                            Amount = decimal.TryParse(dbf1["AMOUNT"]?.ToString(), out var amount) ? amount : (decimal?)null,
+                            DownloadFrom = dbf1["DOWNLOADFR"]?.ToString(),
+                            StationCode = dbf1["STATIONCOD"]?.ToString(),
+                            Description = dbf1["DESCRIPTIO"]?.ToString(),
+                            Approved = bool.TryParse(dbf1["APPROVED"]?.ToString(), out var approved) ? approved : false,
+                            RMonth = int.TryParse(dbf1["RMONTH"]?.ToString(), out var rmonth) ? rmonth : (int?)null,
+                            RYear = int.TryParse(dbf1["RYEAR"]?.ToString(), out var ryear) ? ryear : (int?)null,
+                            Cancelled = bool.TryParse(dbf1["CANCELLED"]?.ToString(), out var cancelled) ? cancelled : false
+                        };
+
+                        twoThreeOSeven.Add(record);
+                    }
+                    catch (Exception ex)
+                    {
+                        problematicRows.Add((row, ex.Message));
+                    }
+                }
+            }
+
+            // =============================================
+            // PASS 2 — Read field layout then recover problematic rows via raw bytes
+            // =============================================
+            if (problematicRows.Any())
+            {
+                // build field map from DBF header
+                var fields = new List<(string Name, char Type, int Size, int Offset)>();
+                int headerLength;
+                int recordLength;
+
+                using (var headerStream = new FileStream(DbfPaths.Ewt2307TwoThreeOSevenDbfPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                {
+                    // read header length and record length from bytes 8-11
+                    var mainHeader = new byte[32];
+                    headerStream.Read(mainHeader, 0, 32);
+                    headerLength = mainHeader[8] | (mainHeader[9] << 8);
+                    recordLength = mainHeader[10] | (mainHeader[11] << 8);
+
+                    // read field descriptors
+                    headerStream.Seek(32, SeekOrigin.Begin);
+                    int fieldOffset = 1; // after deletion flag
+                    while (true)
+                    {
+                        var descriptor = new byte[32];
+                        headerStream.Read(descriptor, 0, 32);
+                        if (descriptor[0] == 0x0D) break;
+
+                        var name = Encoding.ASCII.GetString(descriptor, 0, 11).TrimEnd('\0');
+                        var type = (char)descriptor[11];
+                        var size = descriptor[16];
+
+                        fields.Add((name, type, size, fieldOffset));
+                        fieldOffset += size;
+                    }
+                }
+
+                // recover each problematic row
+                using var rawStream = new FileStream(DbfPaths.Ewt2307TwoThreeOSevenDbfPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                foreach (var (rowNum, error) in problematicRows)
+                {
+                    try
+                    {
+                        long rowOffset = headerLength + ((long)(rowNum - 1) * recordLength);
+                        rawStream.Seek(rowOffset, SeekOrigin.Begin);
+                        var buffer = new byte[recordLength];
+                        rawStream.Read(buffer, 0, buffer.Length);
+
+                        var recovered = ParseRawRow(buffer, fields);
+                        twoThreeOSeven.Add(recovered);
+                    }
+                    catch (Exception ex)
+                    {
+                        // truly unrecoverable
+                        Console.WriteLine($"[UNRECOVERABLE] Row {rowNum} | {ex.Message}");
+                    }
+                }
+            }
+
+            return twoThreeOSeven;
+        }
+
+        //var atc = new List<AtcViewModel>();
+
+        //if (!File.Exists(DbfPaths.Ewt2307AtcDbfPath))
+        //{
+        //    throw new FileNotFoundException($"DBF not found: {DbfPaths.Ewt2307AtcDbfPath}");
+        //}
+
+        //using (var dbf1 = new DbfDataReader.DbfDataReader(DbfPaths.Ewt2307AtcDbfPath))
+        //{
+        //    while (dbf1.Read())
+        //    {
+        //        var record = new AtcViewModel
+        //        {
+
+        //        };
+
+        //        atc.Add(record);
+        //    }
+        //}
+
+        //var payee = new List<PayeeViewModel>();
+
+        //if (!File.Exists(DbfPaths.Ewt2307PayeeDbfPath))
+        //{
+        //    throw new FileNotFoundException($"DBF not found: {DbfPaths.Ewt2307PayeeDbfPath}");
+        //}
+
+        //using (var dbf1 = new DbfDataReader.DbfDataReader(DbfPaths.Ewt2307PayeeDbfPath))
+        //{
+        //    while (dbf1.Read())
+        //    {
+        //        var record = new PayeeViewModel
+        //        {
+
+        //        };
+
+        //        payee.Add(record);
+        //    }
+        //}
+
+        //var ewtCompany = new List<EwtCompanyViewModel>();
+
+        //if (!File.Exists(DbfPaths.Ewt2307EwtCompanyDbfPath))
+        //{
+        //    throw new FileNotFoundException($"DBF not found: {DbfPaths.Ewt2307EwtCompanyDbfPath}");
+        //}
+
+        //using (var dbf1 = new DbfDataReader.DbfDataReader(DbfPaths.Ewt2307EwtCompanyDbfPath))
+        //{
+        //    while (dbf1.Read())
+        //    {
+        //        var record = new EwtCompanyViewModel
+        //        {
+
+        //        };
+
+        //        ewtCompany.Add(record);
+        //    }
+        //}
+
+        #region == Helpers ==
+
         private static DateTime? ToDate(object value) =>
             value != null && value != DBNull.Value && DateTime.TryParse(value.ToString(), out var d)
                 ? d : null;
+
+        TwoThreeOSevenViewModel ParseRawRow(byte[] rowBytes, List<(string Name, char Type, int Size, int Offset)> fields)
+        {
+            var record = new TwoThreeOSevenViewModel();
+
+            var debugLog = new StringBuilder();
+            debugLog.AppendLine($"Buffer length: {rowBytes.Length}");
+            debugLog.AppendLine("Field offsets:");
+            foreach (var (name, type, size, offset) in fields)
+            {
+                debugLog.AppendLine($"  {name} | offset: {offset} | size: {size} | end: {offset + size}");
+            }
+            var debugOutput = debugLog.ToString();
+            // breakpoint here
+
+            foreach (var (name, type, size, offset) in fields)
+            {
+                try
+                {
+                    var fieldBytes = rowBytes.AsSpan(offset, size);
+                    var raw = Encoding.ASCII.GetString(fieldBytes.ToArray()).Trim();
+
+                    switch (name)
+                    {
+                        // D type — the crashers, try to parse, null if blank
+                        case "DATEFROM": record.DateFrom = ParseDbfDate(raw); break;
+                        case "DATETO": record.DateTo = ParseDbfDate(raw); break;
+
+                        // everything else
+                        case "RECID": record.RecId = BitConverter.ToInt32(fieldBytes.ToArray(), 0); break;
+                        case "CONTROLNUM": record.ControlNum = raw; break;
+                        case "VOUCHER_NO": record.VoucherNo = raw; break;
+                        case "CVNO": record.CvNo = raw; break;
+                        case "PAYEECODE": record.PayeeCode = raw; break;
+                        case "ATC_CODE": record.AtcCode = raw; break;
+                        case "TOTAL": record.Total = string.IsNullOrEmpty(raw) ? 0 : decimal.Parse(raw); break;
+                        case "AMOUNT": record.Amount = string.IsNullOrEmpty(raw) ? 0 : decimal.Parse(raw); break;
+                        case "DOWNLOADFR": record.DownloadFrom = raw; break;
+                        case "STATIONCOD": record.StationCode = raw; break;
+                        case "DESCRIPTIO": record.Description = raw; break;
+                        case "APPROVED": record.Approved = raw == "T"; break;
+                        case "RMONTH": record.RMonth = string.IsNullOrEmpty(raw) ? 0 : int.Parse(raw); break;
+                        case "RYEAR": record.RYear = string.IsNullOrEmpty(raw) ? 0 : int.Parse(raw); break;
+                        case "CANCELLED": record.Cancelled = raw == "T"; break;
+                    }
+                }
+                catch
+                {
+                    // this individual field failed — leave as default/null, move to next field
+                }
+            }
+
+            return record;
+        }
+
+        DateTime? ParseDbfDate(string raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw) || raw.Trim('0').Length == 0)
+                return null;
+            if (DateTime.TryParseExact(raw, "yyyyMMdd", null,
+                System.Globalization.DateTimeStyles.None, out var result))
+                return result;
+            return null;
+        }
+
+        #endregion == Helpers ==
     }
 }

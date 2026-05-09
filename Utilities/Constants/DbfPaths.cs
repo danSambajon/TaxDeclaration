@@ -22,6 +22,11 @@
         // EWT related
         public const string Ewt2307DataPath = @"\\192.168.0.253\System3\BIR_Sys2307\Data\";
 
+        public const string Ewt2307TwoThreeOSevenDbfPath = @"C:\Users\samba\OneDrive\Desktop\files\Test_Databases\BIR_Sys_Data\twothreeoseven.dbf";
+        public const string Ewt2307AtcDbfPath = @"C:\Users\samba\OneDrive\Desktop\files\Test_Databases\BIR_Sys_Data\atc.dbf";
+        public const string Ewt2307PayeeDbfPath = @"C:\Users\samba\OneDrive\Desktop\files\Test_Databases\BIR_Sys_Data\payee.dbf";
+        public const string Ewt2307EwtCompanyDbfPath = @"C:\Users\samba\OneDrive\Desktop\files\Test_Databases\BIR_Sys_Data\company.dbf";
+
         public const string IpAddr = "192.168.0.251";
     }
 }

@@ -57,6 +57,7 @@ namespace TaxDeclaration.Controllers
                 //fastCvs = _dbfService.GetFastCvsFromDbf();
                 companies = _dbfService.GetCompaniesFromDbf();
                 dcrMainDisbursements = _dbfService.GetDCRMainDisbursementsFromDbf();
+                 _dbfService.GetBirSysFromDbf();
 
                 // Get data from IBS
                 checkVoucherHeaders = await _ibsConnectionService
