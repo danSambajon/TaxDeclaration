@@ -184,6 +184,9 @@ namespace TaxDeclaration.Services.Dbf
         public void GetBirSysFromDbf()
         {
             var twoThreeOSeven = GetTwoThreeOSeven();
+            var atc = GetATC();
+            var payee = GetPayee();
+            var company = GetEwtCompany();
         }
 
         public List<TwoThreeOSevenViewModel> GetTwoThreeOSeven()
@@ -310,65 +313,77 @@ namespace TaxDeclaration.Services.Dbf
             return twoThreeOSeven;
         }
 
-        //var atc = new List<AtcViewModel>();
+        public List<ATCViewModel> GetATC()
+        {
+            var records = new List<ATCViewModel>();
 
-        //if (!File.Exists(DbfPaths.Ewt2307AtcDbfPath))
-        //{
-        //    throw new FileNotFoundException($"DBF not found: {DbfPaths.Ewt2307AtcDbfPath}");
-        //}
+            if (!File.Exists(DbfPaths.Ewt2307AtcDbfPath))
+                throw new FileNotFoundException($"DBF not found: {DbfPaths.Ewt2307AtcDbfPath}");
 
-        //using (var dbf1 = new DbfDataReader.DbfDataReader(DbfPaths.Ewt2307AtcDbfPath))
-        //{
-        //    while (dbf1.Read())
-        //    {
-        //        var record = new AtcViewModel
-        //        {
+            using var dbf = new DbfDataReader.DbfDataReader(DbfPaths.Ewt2307AtcDbfPath);
 
-        //        };
+            while (dbf.Read())
+            {
+                var record = new ATCViewModel
+                {
+                    Desc = dbf["DESC"]?.ToString(),
+                    Percent = decimal.TryParse(dbf["PERCENT"]?.ToString(), out var percent) ? percent : (decimal?)null,
+                };
 
-        //        atc.Add(record);
-        //    }
-        //}
+                records.Add(record);
+            }
 
-        //var payee = new List<PayeeViewModel>();
+            return records;
+        }
 
-        //if (!File.Exists(DbfPaths.Ewt2307PayeeDbfPath))
-        //{
-        //    throw new FileNotFoundException($"DBF not found: {DbfPaths.Ewt2307PayeeDbfPath}");
-        //}
+        public List<PayeeViewModel> GetPayee()
+        {
+            var records = new List<PayeeViewModel>();
 
-        //using (var dbf1 = new DbfDataReader.DbfDataReader(DbfPaths.Ewt2307PayeeDbfPath))
-        //{
-        //    while (dbf1.Read())
-        //    {
-        //        var record = new PayeeViewModel
-        //        {
+            if (!File.Exists(DbfPaths.Ewt2307PayeeDbfPath))
+                throw new FileNotFoundException($"DBF not found: {DbfPaths.Ewt2307PayeeDbfPath}");
 
-        //        };
+            using var dbf = new DbfDataReader.DbfDataReader(DbfPaths.Ewt2307PayeeDbfPath);
 
-        //        payee.Add(record);
-        //    }
-        //}
+            while (dbf.Read())
+            {
+                var record = new PayeeViewModel
+                {
+                    PayeeName = dbf["PAYEENAME"]?.ToString(),
+                    TinA = dbf["TIN_A"]?.ToString(),
+                    TinB = dbf["TIN_B"]?.ToString(),
+                    TinC = dbf["TIN_C"]?.ToString(),
+                    TinD = dbf["TIN_D"]?.ToString(),
+                };
 
-        //var ewtCompany = new List<EwtCompanyViewModel>();
+                records.Add(record);
+            }
 
-        //if (!File.Exists(DbfPaths.Ewt2307EwtCompanyDbfPath))
-        //{
-        //    throw new FileNotFoundException($"DBF not found: {DbfPaths.Ewt2307EwtCompanyDbfPath}");
-        //}
+            return records;
+        }
 
-        //using (var dbf1 = new DbfDataReader.DbfDataReader(DbfPaths.Ewt2307EwtCompanyDbfPath))
-        //{
-        //    while (dbf1.Read())
-        //    {
-        //        var record = new EwtCompanyViewModel
-        //        {
+        public List<EwtCompanyViewModel> GetEwtCompany()
+        {
+            var records = new List<EwtCompanyViewModel>();
 
-        //        };
+            if (!File.Exists(DbfPaths.Ewt2307EwtCompanyDbfPath))
+                throw new FileNotFoundException($"DBF not found: {DbfPaths.Ewt2307EwtCompanyDbfPath}");
 
-        //        ewtCompany.Add(record);
-        //    }
-        //}
+            using var dbf = new DbfDataReader.DbfDataReader(DbfPaths.Ewt2307EwtCompanyDbfPath);
+
+            while (dbf.Read())
+            {
+                var record = new EwtCompanyViewModel
+                {
+                    Code = dbf["CODE"]?.ToString(),
+                    Name = dbf["NAME"]?.ToString(),
+                };
+
+                records.Add(record);
+            }
+
+            return records;
+        }
 
         #region == Helpers ==
 

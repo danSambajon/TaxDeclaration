@@ -20,4 +20,25 @@
         public int? RYear { get; set; } //
         public bool Cancelled { get; set; } //
     }
+
+    public class ATCViewModel
+    {
+        public string? Desc {  get; set; }
+        public decimal? Percent {  get; set; }
+    }
+
+    public class PayeeViewModel
+    {
+        public string? PayeeName {  get; set; }
+        public string? TinA {  get; set; }
+        public string? TinB {  get; set; }
+        public string? TinC {  get; set; }
+        public string? TinD {  get; set; }
+    }
+
+    public class EwtCompanyViewModel
+    {
+        public string? Code { get; set; }
+        public string? Name { get; set; }
+    }
 }
