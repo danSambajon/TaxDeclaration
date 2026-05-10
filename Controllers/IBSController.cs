@@ -1,5 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using OfficeOpenXml;
+using OfficeOpenXml.Style;
 using TaxDeclaration.Models;
 using TaxDeclaration.Models.ViewModels;
 using TaxDeclaration.Services;
@@ -348,6 +351,69 @@ namespace TaxDeclaration.Controllers
 
 
                 #endregion == Data Processing ==
+
+                if (viewModel.FileFormat == "Excel")
+                {
+                    var dateFrom = viewModel.DateFrom;
+                    var dateTo = viewModel.DateTo;
+
+                    using var package = new ExcelPackage();
+                    var worksheet = package.Workbook.Worksheets.Add("Rpt#1");
+
+                    // Set the column headers
+                    var mergedCells = worksheet.Cells["A1:C1"];
+                    mergedCells.Merge = true;
+                    mergedCells.Value = "REPORT# 1";
+                    mergedCells.Style.Font.Size = 13;
+
+                    worksheet.Cells["A2"].Value = "Date Range:";
+                    worksheet.Cells["A3"].Value = "Extracted By:";
+                    worksheet.Cells["A4"].Value = "Company:";
+                    worksheet.Cells["A5"].Value = "Status Filter:";
+
+                    worksheet.Cells["B2"].Value = $"{dateFrom} - {dateTo}";
+
+                    worksheet.Cells["A7"].Value = "PO #";
+                    worksheet.Cells["B7"].Value = "IS PO #";
+                    worksheet.Cells["C7"].Value = "Date";
+                    worksheet.Cells["D7"].Value = "Supplier";
+                    worksheet.Cells["E7"].Value = "Product";
+                    worksheet.Cells["F7"].Value = "Quantity";
+                    worksheet.Cells["G7"].Value = "Unit";
+                    worksheet.Cells["H7"].Value = "Price";
+                    worksheet.Cells["I7"].Value = "Amount";
+                    worksheet.Cells["J7"].Value = "Remarks";
+
+                    // Apply styling to the header row
+                    //using (var range = worksheet.Cells["A7:" + (showVoidCancelColumns ? "M7" : "J7")])
+                    //{
+                    //    range.Style.Font.Bold = true;
+                    //    range.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    //    range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+                    //    range.Style.Border.Top.Style = ExcelBorderStyle.Thin;
+                    //    range.Style.Border.Left.Style = ExcelBorderStyle.Thin;
+                    //    range.Style.Border.Right.Style = ExcelBorderStyle.Thin;
+                    //    range.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+                    //}
+
+                    // Populate the data rows
+                    var row = 8;
+                    var currencyFormat = "#,##0.00";
+
+                    // Auto-fit columns for better readability
+                    worksheet.Cells.AutoFitColumns();
+                    worksheet.View.FreezePanes(8, 1);
+
+                    // var fileName = $"Purchase_Order_Report_{DateTimeHelper.GetCurrentPhilippineTime():yyyyddMMHHmmss}.xlsx";
+                    var stream = new MemoryStream();
+                    await package.SaveAsAsync(stream, cancellationToken);
+                    stream.Position = 0;
+                    // return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+                }
+                else
+                {
+                    // PDF Code
+                }
 
                 TempData["success"] = "Success!";
             }
