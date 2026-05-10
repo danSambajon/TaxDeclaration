@@ -187,6 +187,54 @@ namespace TaxDeclaration.Services.Dbf
             var atc = GetATC();
             var payee = GetPayee();
             var company = GetEwtCompany();
+
+            //var cur2307 = (
+            //    from a in twoThreeOSeven
+            //    join b in atc on a.AtcCode equals b. into bGroup
+            //    from b in bGroup.DefaultIfEmpty()
+            //    join c in payee on a.payeecode equals c. into cGroup
+            //    from c in cGroup.DefaultIfEmpty()
+            //    join d in company on a.companycode.Trim() equals d.Code.Trim() into dGroup
+            //    from d in dGroup.DefaultIfEmpty()
+            //    where !string.IsNullOrWhiteSpace(a.rmonth)
+            //       && !string.IsNullOrWhiteSpace(a.ryear)
+            //       && !string.IsNullOrWhiteSpace(a.payeecode)
+            //       && (a.downloadfrom != null && a.downloadfrom.Contains("IBS"))
+            //    select new
+            //    {
+            //        a.datefrom,
+            //        a.dateto,
+            //        a.cvno,
+            //        a.voucher_no,
+            //        a.atc_code,
+            //        a.total,
+            //        a.amount,
+            //        a.stationcode,
+            //        a.approved,
+            //        a.rmonth,
+            //        a.ryear,
+            //        desc = (b == null || b.desc == null) ? new string(' ', 254) : b.desc,
+            //        percent = (b == null || b.percent == null) ? 0 : b.percent,
+            //        a.downloadfrom,
+            //        a.cancelled,
+            //        a.payeecode,
+            //        payeename = c == null ? null : c.payeename,
+            //        tin_a = c == null ? null : c.tin_a,
+            //        tin_b = c == null ? null : c.tin_b,
+            //        tin_c = c == null ? null : c.tin_c,
+            //        tin_d = c == null ? null : c.tin_d,
+            //        payorcode = d == null ? null : d.code,
+            //        payorname = d == null ? null : d.name,
+            //        a.description
+            //    })
+            //    .Distinct()
+            //    .OrderBy(x => x.ryear)
+            //    .ThenBy(x => x.rmonth)
+            //    .ThenBy(x => x.cvno)
+            //    .ToList();
+
+
+
         }
 
         public List<TwoThreeOSevenViewModel> GetTwoThreeOSeven()
@@ -350,6 +398,7 @@ namespace TaxDeclaration.Services.Dbf
                 var record = new PayeeViewModel
                 {
                     PayeeName = dbf["PAYEENAME"]?.ToString(),
+                    PayeeCode = dbf["PAYEECODE"]?.ToString(),
                     TinA = dbf["TIN_A"]?.ToString(),
                     TinB = dbf["TIN_B"]?.ToString(),
                     TinC = dbf["TIN_C"]?.ToString(),

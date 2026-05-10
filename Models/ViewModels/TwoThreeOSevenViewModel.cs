@@ -30,6 +30,7 @@
     public class PayeeViewModel
     {
         public string? PayeeName {  get; set; }
+        public string? PayeeCode {  get; set; }
         public string? TinA {  get; set; }
         public string? TinB {  get; set; }
         public string? TinC {  get; set; }
