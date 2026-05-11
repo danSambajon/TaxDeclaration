@@ -38,6 +38,9 @@ namespace TaxDeclaration.Controllers
 
         public async Task<IActionResult> Process(GenerateTaxDeclarationViewModel viewModel, CancellationToken cancellationToken)
         {
+            // Default file for IBS tax declaration
+            viewModel.FileFormat = "Excel";
+
             #region == Initialize data containers ==
 
             var stations = new List<FastStationViewModel>();
@@ -352,6 +355,8 @@ namespace TaxDeclaration.Controllers
 
                 #endregion == Data Processing ==
 
+                #region == Generate Report ==
+
                 if (viewModel.FileFormat == "Excel")
                 {
                     var dateFrom = viewModel.DateFrom;
@@ -390,16 +395,16 @@ namespace TaxDeclaration.Controllers
                     mergedCells = worksheet.Cells[row, col, row + 1, col]; mergedCells.Merge = true; mergedCells.Value = "BANK ACCT."; col++;
                     var colSpandEnd = col-1;
 
-                    worksheet.Cells[colSpandEnd, row, colSpandEnd, row + 1].Style.Fill.PatternType = ExcelFillStyle.Solid;
-                    worksheet.Cells[colSpandEnd, row, colSpandEnd, row + 1].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+                    worksheet.Cells[row, colSpanStart, row + 1, colSpandEnd].Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    worksheet.Cells[row, colSpanStart, row + 1, colSpandEnd].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
 
                     colSpanStart = col;
                     worksheet.Cells[row, col].Value = "FROM DCR";
                     worksheet.Cells[row+1, col].Value = "DCR DATE"; col++;
                     colSpandEnd = col - 1;
 
-                    worksheet.Cells[colSpandEnd, row, colSpandEnd, row + 1].Style.Fill.PatternType = ExcelFillStyle.Solid;
-                    worksheet.Cells[colSpandEnd, row, colSpandEnd, row + 1].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.Yellow);
+                    worksheet.Cells[row, colSpanStart, row + 1, colSpandEnd].Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    worksheet.Cells[row, colSpanStart, row + 1, colSpandEnd].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.Yellow);
 
 
 
@@ -435,6 +440,8 @@ namespace TaxDeclaration.Controllers
                 {
                     // PDF Code
                 }
+
+                #endregion == Generate Report ==
 
                 TempData["success"] = "Success!";
             }
