@@ -363,26 +363,47 @@ namespace TaxDeclaration.Controllers
                     // Set the column headers
                     var mergedCells = worksheet.Cells["A1:C1"];
                     mergedCells.Merge = true;
-                    mergedCells.Value = "REPORT# 1";
+                    mergedCells.Value = "IBS DISBURSEMENT VOUCHERS - (FILPRIDE)";
                     mergedCells.Style.Font.Size = 13;
+                    mergedCells.Style.Font.Bold = true;
 
-                    worksheet.Cells["A2"].Value = "Date Range:";
-                    worksheet.Cells["A3"].Value = "Extracted By:";
-                    worksheet.Cells["A4"].Value = "Company:";
-                    worksheet.Cells["A5"].Value = "Status Filter:";
+                    worksheet.Cells[1, 5].Value = $"Report generated: {DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}";
 
-                    worksheet.Cells["B2"].Value = $"{dateFrom} - {dateTo}";
+                    mergedCells = worksheet.Cells["A2:C2"];
+                    mergedCells.Merge = true;
+                    mergedCells.Value = $"Voucher's Check Date from {viewModel.DateFrom} to {viewModel.DateTo}";
 
-                    worksheet.Cells["A7"].Value = "PO #";
-                    worksheet.Cells["B7"].Value = "IS PO #";
-                    worksheet.Cells["C7"].Value = "Date";
-                    worksheet.Cells["D7"].Value = "Supplier";
-                    worksheet.Cells["E7"].Value = "Product";
-                    worksheet.Cells["F7"].Value = "Quantity";
-                    worksheet.Cells["G7"].Value = "Unit";
-                    worksheet.Cells["H7"].Value = "Price";
-                    worksheet.Cells["I7"].Value = "Amount";
-                    worksheet.Cells["J7"].Value = "Remarks";
+                    mergedCells = worksheet.Cells["A3:C3"];
+                    mergedCells.Merge = true;
+                    mergedCells.Value = "Both Remitted and Unremitted";
+
+                    var row = 4;
+                    var col = 1;
+
+                    var colSpanStart = col;
+                    mergedCells = worksheet.Cells[row, col, row + 1, col]; mergedCells.Merge = true; mergedCells.Value = "VOUCHER #"; col++;
+                    mergedCells = worksheet.Cells[row, col, row + 1, col]; mergedCells.Merge = true; mergedCells.Value = "VOUCHER DATE"; col++;
+                    mergedCells = worksheet.Cells[row, col, row + 1, col]; mergedCells.Merge = true; mergedCells.Value = "PAYEE"; col++;
+                    mergedCells = worksheet.Cells[row, col, row + 1, col]; mergedCells.Merge = true; mergedCells.Value = "PARTICULAR"; col++;
+                    mergedCells = worksheet.Cells[row, col, row + 1, col]; mergedCells.Merge = true; mergedCells.Value = "CHECK #"; col++;
+                    mergedCells = worksheet.Cells[row, col, row + 1, col]; mergedCells.Merge = true; mergedCells.Value = "CHECK DATE"; col++;
+                    mergedCells = worksheet.Cells[row, col, row + 1, col]; mergedCells.Merge = true; mergedCells.Value = "BANK ACCT."; col++;
+                    var colSpandEnd = col-1;
+
+                    worksheet.Cells[colSpandEnd, row, colSpandEnd, row + 1].Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    worksheet.Cells[colSpandEnd, row, colSpandEnd, row + 1].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+
+                    colSpanStart = col;
+                    worksheet.Cells[row, col].Value = "FROM DCR";
+                    worksheet.Cells[row+1, col].Value = "DCR DATE"; col++;
+                    colSpandEnd = col - 1;
+
+                    worksheet.Cells[colSpandEnd, row, colSpandEnd, row + 1].Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    worksheet.Cells[colSpandEnd, row, colSpandEnd, row + 1].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.Yellow);
+
+
+
+                    // Set Column Headers 
 
                     // Apply styling to the header row
                     //using (var range = worksheet.Cells["A7:" + (showVoidCancelColumns ? "M7" : "J7")])
@@ -397,7 +418,6 @@ namespace TaxDeclaration.Controllers
                     //}
 
                     // Populate the data rows
-                    var row = 8;
                     var currencyFormat = "#,##0.00";
 
                     // Auto-fit columns for better readability
@@ -405,10 +425,11 @@ namespace TaxDeclaration.Controllers
                     worksheet.View.FreezePanes(8, 1);
 
                     // var fileName = $"Purchase_Order_Report_{DateTimeHelper.GetCurrentPhilippineTime():yyyyddMMHHmmss}.xlsx";
+                    var fileName = $"Tax_Report.xlsx";
                     var stream = new MemoryStream();
                     await package.SaveAsAsync(stream, cancellationToken);
                     stream.Position = 0;
-                    // return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+                    return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
                 }
                 else
                 {
