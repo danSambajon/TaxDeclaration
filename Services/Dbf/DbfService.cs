@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.VisualBasic;
 using Npgsql;
 using System.Data;
@@ -181,66 +182,86 @@ namespace TaxDeclaration.Services.Dbf
             return records;
         }
 
-        public void GetBirSysFromDbf()
+        public List<Cur2307ViewModel> GetBirSysFromDbf()
         {
             var twoThreeOSeven = GetTwoThreeOSeven();
             var atc = GetATC();
             var payee = GetPayee();
             var company = GetEwtCompany();
 
-            //var cur2307 = (
-            //    from a in twoThreeOSeven
-            //    join b in atc on a.AtcCode equals b. into bGroup
-            //    from b in bGroup.DefaultIfEmpty()
-            //    join c in payee on a.payeecode equals c. into cGroup
-            //    from c in cGroup.DefaultIfEmpty()
-            //    join d in company on a.companycode.Trim() equals d.Code.Trim() into dGroup
-            //    from d in dGroup.DefaultIfEmpty()
-            //    where !string.IsNullOrWhiteSpace(a.rmonth)
-            //       && !string.IsNullOrWhiteSpace(a.ryear)
-            //       && !string.IsNullOrWhiteSpace(a.payeecode)
-            //       && (a.downloadfrom != null && a.downloadfrom.Contains("IBS"))
-            //    select new
-            //    {
-            //        a.datefrom,
-            //        a.dateto,
-            //        a.cvno,
-            //        a.voucher_no,
-            //        a.atc_code,
-            //        a.total,
-            //        a.amount,
-            //        a.stationcode,
-            //        a.approved,
-            //        a.rmonth,
-            //        a.ryear,
-            //        desc = (b == null || b.desc == null) ? new string(' ', 254) : b.desc,
-            //        percent = (b == null || b.percent == null) ? 0 : b.percent,
-            //        a.downloadfrom,
-            //        a.cancelled,
-            //        a.payeecode,
-            //        payeename = c == null ? null : c.payeename,
-            //        tin_a = c == null ? null : c.tin_a,
-            //        tin_b = c == null ? null : c.tin_b,
-            //        tin_c = c == null ? null : c.tin_c,
-            //        tin_d = c == null ? null : c.tin_d,
-            //        payorcode = d == null ? null : d.code,
-            //        payorname = d == null ? null : d.name,
-            //        a.description
-            //    })
-            //    .Distinct()
-            //    .OrderBy(x => x.ryear)
-            //    .ThenBy(x => x.rmonth)
-            //    .ThenBy(x => x.cvno)
-            //    .ToList();
+            var cur2307 = new List<Cur2307ViewModel>();
 
+            twoThreeOSeven = twoThreeOSeven.Where(t => t.RMonth != 0 && !t.RMonth.ToString().IsNullOrEmpty() 
+                && t.RYear != 0 && !t.RYear.ToString().IsNullOrEmpty() 
+                && !string.IsNullOrWhiteSpace(t.PayeeCode)
+                && (!t.DownloadFrom.IsNullOrEmpty() && t.DownloadFrom.Contains("IBS"))).ToList();
 
+            var atcDistinct = atc
+                .GroupBy(b => b.Code)
+                .OrderBy(b => b.Key)
+                .Select(g => g.First())
+                .ToList();
 
+            var payeeDistinct = payee
+                .GroupBy(b => b.PayeeCode)
+                .OrderBy(b => b.Key)
+                .Select(g => g.First())
+                .ToList();
+
+            var companyDistinct = company
+                .GroupBy(d => (d.Code ?? "").Trim())
+                .OrderBy(b => b.Key)
+                .Select(g => g.First())
+                .ToList();
+
+            cur2307 = (
+                from a in twoThreeOSeven
+                join b in atcDistinct on a.AtcCode equals b.Code into bGroup
+                from b in bGroup.DefaultIfEmpty()
+                join c in payee on a.PayeeCode equals c.PayeeCode into cGroup
+                from c in cGroup.DefaultIfEmpty()
+                join d in companyDistinct on (a.CompanyCode ?? "").Trim() equals (d.Code ?? "").Trim() into dGroup
+                from d in dGroup.DefaultIfEmpty()
+                select new Cur2307ViewModel
+                {
+                    DateFrom = a.DateFrom,
+                    DateTo = a.DateTo,
+                    CvNo = a.CvNo,
+                    VoucherNo = a.VoucherNo,
+                    AtcCode = a.AtcCode,
+                    Total = a.Total,
+                    Amount = a.Amount,
+                    StationCode = a.StationCode,
+                    Approved = a.Approved,
+                    RMonth = a.RMonth,
+                    RYear = a.RYear,
+                    Desc = (b == null || b.Desc == null) ? new string(' ', 254) : b.Desc,
+                    Percent = (b == null || b.Percent == null) ? 0 : b.Percent,
+                    DownloadFrom = a.DownloadFrom,
+                    Cancelled = a.Cancelled,
+                    PayeeCode = a.PayeeCode,
+                    PayeeName = c == null ? null : c.PayeeName,
+                    TinA = c == null ? null : c.TinA,
+                    TinB = c == null ? null : c.TinB,
+                    TinC = c == null ? null : c.TinC,
+                    TinD = c == null ? null : c.TinD,
+                    PayorCode = d == null ? null : d.Code,
+                    PayorName = d == null ? null : d.Name,
+                    Description = a.Description
+                })
+                .OrderBy(x => x.Desc)
+                .ThenBy(x => x.RMonth)
+                .ThenBy(x => x.CvNo)
+                .ToList();
+
+            return cur2307;
         }
 
         public List<TwoThreeOSevenViewModel> GetTwoThreeOSeven()
         {
             var twoThreeOSeven = new List<TwoThreeOSevenViewModel>();
             var problematicRows = new List<(int Row, string Error)>();
+            var errorCounter = 0;
 
             if (!File.Exists(DbfPaths.Ewt2307TwoThreeOSevenDbfPath))
                 throw new FileNotFoundException($"DBF not found: {DbfPaths.Ewt2307TwoThreeOSevenDbfPath}");
@@ -268,34 +289,71 @@ namespace TaxDeclaration.Services.Dbf
 
                     if (!hasRow) break;
 
+                    var record = new TwoThreeOSevenViewModel();
+                    string currentField = null;
+
                     try
                     {
-                        var record = new TwoThreeOSevenViewModel
-                        {
-                            RecId = int.Parse(dbf1["RECID"]?.ToString()),
-                            ControlNum = dbf1["CONTROLNUM"]?.ToString(),
-                            DateFrom = ToDate(dbf1["DATEFROM"]),
-                            DateTo = ToDate(dbf1["DATETO"]),
-                            VoucherNo = dbf1["VOUCHER_NO"]?.ToString(),
-                            CvNo = dbf1["CVNO"]?.ToString(),
-                            PayeeCode = dbf1["PAYEECODE"]?.ToString(),
-                            AtcCode = dbf1["ATC_CODE"]?.ToString(),
-                            Total = decimal.TryParse(dbf1["TOTAL"]?.ToString(), out var total) ? total : (decimal?)null,
-                            Amount = decimal.TryParse(dbf1["AMOUNT"]?.ToString(), out var amount) ? amount : (decimal?)null,
-                            DownloadFrom = dbf1["DOWNLOADFR"]?.ToString(),
-                            StationCode = dbf1["STATIONCOD"]?.ToString(),
-                            Description = dbf1["DESCRIPTIO"]?.ToString(),
-                            Approved = bool.TryParse(dbf1["APPROVED"]?.ToString(), out var approved) ? approved : false,
-                            RMonth = int.TryParse(dbf1["RMONTH"]?.ToString(), out var rmonth) ? rmonth : (int?)null,
-                            RYear = int.TryParse(dbf1["RYEAR"]?.ToString(), out var ryear) ? ryear : (int?)null,
-                            Cancelled = bool.TryParse(dbf1["CANCELLED"]?.ToString(), out var cancelled) ? cancelled : false
-                        };
+                        currentField = "RECID";
+                        record.RecId = int.Parse(dbf1["RECID"]?.ToString());
+
+                        currentField = "CONTROLNUM";
+                        record.ControlNum = dbf1["CONTROLNUM"]?.ToString();
+
+                        currentField = "DATEFROM";
+                        record.DateFrom = DateOnly.FromDateTime(ToDate(dbf1["DATEFROM"]) ?? default);
+
+                        currentField = "DATETO";
+                        record.DateTo = DateOnly.FromDateTime(ToDate(dbf1["DATETO"]) ?? default);
+
+                        currentField = "VOUCHER_NO";
+                        record.VoucherNo = dbf1["VOUCHER_NO"]?.ToString();
+
+                        currentField = "CVNO";
+                        record.CvNo = dbf1["CVNO"]?.ToString();
+
+                        currentField = "PAYEECODE";
+                        record.PayeeCode = dbf1["PAYEECODE"]?.ToString();
+
+                        currentField = "ATC_CODE";
+                        record.AtcCode = dbf1["ATC_CODE"]?.ToString();
+
+                        currentField = "TOTAL";
+                        record.Total = decimal.TryParse(dbf1["TOTAL"]?.ToString(), out var total) ? total : (decimal?)null;
+
+                        currentField = "AMOUNT";
+                        record.Amount = decimal.TryParse(dbf1["AMOUNT"]?.ToString(), out var amount) ? amount : (decimal?)null;
+
+                        currentField = "DOWNLOADFR";
+                        record.DownloadFrom = dbf1["DOWNLOADFR"]?.ToString();
+
+                        currentField = "STATIONCOD";
+                        record.StationCode = dbf1["STATIONCOD"]?.ToString();
+
+                        currentField = "DESCRIPTIO";
+                        record.Description = dbf1["DESCRIPTIO"]?.ToString();
+
+                        currentField = "COMPANYCOD";
+                        record.CompanyCode = dbf1["COMPANYCOD"]?.ToString();
+
+                        currentField = "APPROVED";
+                        record.Approved = bool.TryParse(dbf1["APPROVED"]?.ToString(), out var approved) ? approved : false;
+
+                        currentField = "RMONTH";
+                        record.RMonth = int.TryParse(dbf1["RMONTH"]?.ToString(), out var rmonth) ? rmonth : (int?)null;
+
+                        currentField = "RYEAR";
+                        record.RYear = int.TryParse(dbf1["RYEAR"]?.ToString(), out var ryear) ? ryear : (int?)null;
+
+                        currentField = "CANCELLED";
+                        record.Cancelled = bool.TryParse(dbf1["CANCELLED"]?.ToString(), out var cancelled) ? cancelled : false;
 
                         twoThreeOSeven.Add(record);
                     }
                     catch (Exception ex)
                     {
-                        problematicRows.Add((row, ex.Message));
+                        // tells us exactly which field broke
+                        problematicRows.Add((row, $"Field: {currentField} | {ex.Message}"));
                     }
                 }
             }
@@ -376,6 +434,7 @@ namespace TaxDeclaration.Services.Dbf
                 {
                     Desc = dbf["DESC"]?.ToString(),
                     Percent = decimal.TryParse(dbf["PERCENT"]?.ToString(), out var percent) ? percent : (decimal?)null,
+                    Code = dbf["CODE"]?.ToString()
                 };
 
                 records.Add(record);
@@ -464,8 +523,8 @@ namespace TaxDeclaration.Services.Dbf
                     switch (name)
                     {
                         // D type — the crashers, try to parse, null if blank
-                        case "DATEFROM": record.DateFrom = ParseDbfDate(raw); break;
-                        case "DATETO": record.DateTo = ParseDbfDate(raw); break;
+                        case "DATEFROM": record.DateFrom = DateOnly.FromDateTime(ParseDbfDate(raw) ?? default); break;
+                        case "DATETO": record.DateTo = DateOnly.FromDateTime(ParseDbfDate(raw) ?? default); break;
 
                         // everything else
                         case "RECID": record.RecId = BitConverter.ToInt32(fieldBytes.ToArray(), 0); break;

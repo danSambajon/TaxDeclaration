@@ -47,6 +47,7 @@ namespace TaxDeclaration.Controllers
             var fastCvs = new List<FastCvViewModel>();
             var companies = new List<TaxDeclareCompanyViewModel>();
             var dcrMainDisbursements = new List<DCRMainDisbursementViewModel>();
+            var cur2307 = new List<Cur2307ViewModel>();
 
             var checkVoucherHeaders = new List<FilprideCheckVoucherHeader>();
             var checkVoucherDetails = new List<FilprideCheckVoucherDetail>();
@@ -59,11 +60,11 @@ namespace TaxDeclaration.Controllers
                 #region == Getting data from sources ==
 
                 // Get data from DBF files
-                //stations = _dbfService.GetStationsFromDbf();
-                //fastCvs = _dbfService.GetFastCvsFromDbf();
+                stations = _dbfService.GetStationsFromDbf();
+                fastCvs = _dbfService.GetFastCvsFromDbf();
                 companies = _dbfService.GetCompaniesFromDbf();
                 dcrMainDisbursements = _dbfService.GetDCRMainDisbursementsFromDbf();
-                 _dbfService.GetBirSysFromDbf();
+                cur2307 = _dbfService.GetBirSysFromDbf();
 
                 // Get data from IBS
                 checkVoucherHeaders = await _ibsConnectionService

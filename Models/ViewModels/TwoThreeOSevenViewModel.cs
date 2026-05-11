@@ -4,8 +4,8 @@
     {
         public int RecId { get; set; }
         public string? ControlNum { get; set; }
-        public DateTime? DateFrom { get; set; } // 
-        public DateTime? DateTo { get; set; } //
+        public DateOnly? DateFrom { get; set; } // 
+        public DateOnly? DateTo { get; set; } //
         public string? VoucherNo { get; set; } //
         public string? CvNo { get; set; } //
         public string? PayeeCode { get; set; } //
@@ -19,12 +19,14 @@
         public int? RMonth { get; set; } //
         public int? RYear { get; set; } //
         public bool Cancelled { get; set; } //
+        public string? CompanyCode { get; set; }
     }
 
     public class ATCViewModel
     {
         public string? Desc {  get; set; }
         public decimal? Percent {  get; set; }
+        public string? Code {  get; set; }
     }
 
     public class PayeeViewModel
