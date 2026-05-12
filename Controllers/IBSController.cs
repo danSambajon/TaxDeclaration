@@ -667,6 +667,7 @@ namespace TaxDeclaration.Controllers
                         Bal = 0m
                     })
                     .OrderBy(c => c.Acctcd)
+                    .ThenBy(c => c.AcctName)
                     .ToList();
 
                 foreach(var trialBal in curtrialbal)
@@ -691,18 +692,20 @@ namespace TaxDeclaration.Controllers
                         Debit = c.Sum(x => x.DrCr ? 0m : x.Amount),
                         Credit = c.Sum(x => x.DrCr ? x.Amount : 0),
                         Bal = 0m
-                    });
+                    })
+                    .OrderBy(c => c.Acctcd)
+                    .ThenBy(c => c.AcctName)
+                    .ToList();
 
                 foreach (var trialBal in curtrialbaldoc)
                 {
                     trialBal.Bal = trialBal.Debit - trialBal.Credit;
                 }
 
-                // TB DOC
-                var curtrialbaldoc2 = cvEntries2
-                    .Where(c => c.BsNo.Contains("DOC") && !c.BsNo.Contains("UNDOC")
-                    && !c.BsNo.Contains("PUR") && !c.BsNo.Contains("HAU")
-                    && !c.BsNo.Contains("PAY"))
+                // TB UNDOC
+                var curtrialbalundoc = cvEntries2
+                    .Where(c => c.BsNo.Contains("UNDOC") && !c.BsNo.Contains("PUR") 
+                    && !c.BsNo.Contains("HAU") && !c.BsNo.Contains("PAY"))
                     .GroupBy(c => new
                     {
                         c.Acctcd,
@@ -715,9 +718,169 @@ namespace TaxDeclaration.Controllers
                         Debit = c.Sum(x => x.DrCr ? 0m : x.Amount),
                         Credit = c.Sum(x => x.DrCr ? x.Amount : 0),
                         Bal = 0m
-                    });
+                    })
+                    .OrderBy(c => c.Acctcd)
+                    .ThenBy(c => c.AcctName)
+                    .ToList();
 
-                foreach (var trialBal in curtrialbaldoc)
+                foreach (var trialBal in curtrialbalundoc)
+                {
+                    trialBal.Bal = trialBal.Debit - trialBal.Credit;
+                }
+
+                // TB PURDOC
+                var curtrialbalpurdoc = cvEntries2
+                    .Where(c => c.BsNo.Contains("DOC") && !c.BsNo.Contains("UNDOC") 
+                    && c.BsNo.Contains("PUR"))
+                    .GroupBy(c => new
+                    {
+                        c.Acctcd,
+                        c.AcctName
+                    })
+                    .Select(c => new CurtrialbalViewModel
+                    {
+                        Acctcd = c.Key.Acctcd,
+                        AcctName = c.Key.AcctName,
+                        Debit = c.Sum(x => x.DrCr ? 0m : x.Amount),
+                        Credit = c.Sum(x => x.DrCr ? x.Amount : 0),
+                        Bal = 0m
+                    })
+                    .OrderBy(c => c.Acctcd)
+                    .ThenBy(c => c.AcctName)
+                    .ToList();
+
+                foreach (var trialBal in curtrialbalpurdoc)
+                {
+                    trialBal.Bal = trialBal.Debit - trialBal.Credit;
+                }
+
+                // TB PURUNDOC
+                var curtrialbalpurundoc = cvEntries2
+                    .Where(c => c.BsNo.Contains("UNDOC") && c.BsNo.Contains("PUR"))
+                    .GroupBy(c => new
+                    {
+                        c.Acctcd,
+                        c.AcctName
+                    })
+                    .Select(c => new CurtrialbalViewModel
+                    {
+                        Acctcd = c.Key.Acctcd,
+                        AcctName = c.Key.AcctName,
+                        Debit = c.Sum(x => x.DrCr ? 0m : x.Amount),
+                        Credit = c.Sum(x => x.DrCr ? x.Amount : 0),
+                        Bal = 0m
+                    })
+                    .OrderBy(c => c.Acctcd)
+                    .ThenBy(c => c.AcctName)
+                    .ToList();
+
+                foreach (var trialBal in curtrialbalpurundoc)
+                {
+                    trialBal.Bal = trialBal.Debit - trialBal.Credit;
+                }
+
+                // TB HAUDOC
+                var curtrialbalhaudoc = cvEntries2
+                    .Where(c => c.BsNo.Contains("DOC") 
+                    && c.BsNo.Contains("HAU")
+                    && !c.BsNo.Contains("UNDOC"))
+                    .GroupBy(c => new
+                    {
+                        c.Acctcd,
+                        c.AcctName
+                    })
+                    .Select(c => new CurtrialbalViewModel
+                    {
+                        Acctcd = c.Key.Acctcd,
+                        AcctName = c.Key.AcctName,
+                        Debit = c.Sum(x => x.DrCr ? 0m : x.Amount),
+                        Credit = c.Sum(x => x.DrCr ? x.Amount : 0),
+                        Bal = 0m
+                    })
+                    .OrderBy(c => c.Acctcd)
+                    .ThenBy(c => c.AcctName)
+                    .ToList();
+
+                foreach (var trialBal in curtrialbalhaudoc)
+                {
+                    trialBal.Bal = trialBal.Debit - trialBal.Credit;
+                }
+
+                // TB HAUUNDOC
+                var curtrialbalhauundoc = cvEntries2
+                    .Where(c => c.BsNo.Contains("UNDOC") 
+                    && c.BsNo.Contains("HAU"))
+                    .GroupBy(c => new
+                    {
+                        c.Acctcd,
+                        c.AcctName
+                    })
+                    .Select(c => new CurtrialbalViewModel
+                    {
+                        Acctcd = c.Key.Acctcd,
+                        AcctName = c.Key.AcctName,
+                        Debit = c.Sum(x => x.DrCr ? 0m : x.Amount),
+                        Credit = c.Sum(x => x.DrCr ? x.Amount : 0),
+                        Bal = 0m
+                    })
+                    .OrderBy(c => c.Acctcd)
+                    .ThenBy(c => c.AcctName)
+                    .ToList();
+
+                foreach (var trialBal in curtrialbalhauundoc)
+                {
+                    trialBal.Bal = trialBal.Debit - trialBal.Credit;
+                }
+
+                // TB PAYDOC
+                var curtrialbalpaydoc = cvEntries2
+                    .Where(c => c.BsNo.Contains("DOC") 
+                    && c.BsNo.Contains("PAY")
+                    && !c.BsNo.Contains("UNDOC"))
+                    .GroupBy(c => new
+                    {
+                        c.Acctcd,
+                        c.AcctName
+                    })
+                    .Select(c => new CurtrialbalViewModel
+                    {
+                        Acctcd = c.Key.Acctcd,
+                        AcctName = c.Key.AcctName,
+                        Debit = c.Sum(x => x.DrCr ? 0m : x.Amount),
+                        Credit = c.Sum(x => x.DrCr ? x.Amount : 0),
+                        Bal = 0m
+                    })
+                    .OrderBy(c => c.Acctcd)
+                    .ThenBy(c => c.AcctName)
+                    .ToList();
+
+                foreach (var trialBal in curtrialbalpaydoc)
+                {
+                    trialBal.Bal = trialBal.Debit - trialBal.Credit;
+                }
+
+                // TB PAYUNDOC
+                var curtrialbalpayundoc = cvEntries2
+                    .Where(c => c.BsNo.Contains("UNDOC") 
+                    && c.BsNo.Contains("PAY"))
+                    .GroupBy(c => new
+                    {
+                        c.Acctcd,
+                        c.AcctName
+                    })
+                    .Select(c => new CurtrialbalViewModel
+                    {
+                        Acctcd = c.Key.Acctcd,
+                        AcctName = c.Key.AcctName,
+                        Debit = c.Sum(x => x.DrCr ? 0m : x.Amount),
+                        Credit = c.Sum(x => x.DrCr ? x.Amount : 0),
+                        Bal = 0m
+                    })
+                    .OrderBy(c => c.Acctcd)
+                    .ThenBy(c => c.AcctName)
+                    .ToList();
+
+                foreach (var trialBal in curtrialbalpayundoc)
                 {
                     trialBal.Bal = trialBal.Debit - trialBal.Credit;
                 }
