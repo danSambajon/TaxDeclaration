@@ -651,7 +651,76 @@ namespace TaxDeclaration.Controllers
 
                 #endregion == EWT and VAT ==
 
+                // TB
+                var curtrialbal = cvEntries2
+                    .GroupBy(c => new
+                    {
+                        c.Acctcd,
+                        c.AcctName
+                    })
+                    .Select(c => new CurtrialbalViewModel
+                    {
+                        Acctcd = c.Key.Acctcd,
+                        AcctName = c.Key.AcctName,
+                        Debit = c.Sum(x => x.DrCr ? 0m : x.Amount),
+                        Credit = c.Sum(x => x.DrCr ? x.Amount : 0),
+                        Bal = 0m
+                    })
+                    .OrderBy(c => c.Acctcd)
+                    .ToList();
 
+                foreach(var trialBal in curtrialbal)
+                {
+                    trialBal.Bal = trialBal.Debit - trialBal.Credit;
+                }
+
+                // TB DOC
+                var curtrialbaldoc = cvEntries2
+                    .Where(c => c.BsNo.Contains("DOC") && !c.BsNo.Contains("UNDOC")
+                    && !c.BsNo.Contains("PUR") && !c.BsNo.Contains("HAU")
+                    && !c.BsNo.Contains("PAY"))
+                    .GroupBy(c => new
+                    {
+                        c.Acctcd,
+                        c.AcctName
+                    })
+                    .Select(c => new CurtrialbalViewModel
+                    {
+                        Acctcd = c.Key.Acctcd,
+                        AcctName = c.Key.AcctName,
+                        Debit = c.Sum(x => x.DrCr ? 0m : x.Amount),
+                        Credit = c.Sum(x => x.DrCr ? x.Amount : 0),
+                        Bal = 0m
+                    });
+
+                foreach (var trialBal in curtrialbaldoc)
+                {
+                    trialBal.Bal = trialBal.Debit - trialBal.Credit;
+                }
+
+                // TB DOC
+                var curtrialbaldoc2 = cvEntries2
+                    .Where(c => c.BsNo.Contains("DOC") && !c.BsNo.Contains("UNDOC")
+                    && !c.BsNo.Contains("PUR") && !c.BsNo.Contains("HAU")
+                    && !c.BsNo.Contains("PAY"))
+                    .GroupBy(c => new
+                    {
+                        c.Acctcd,
+                        c.AcctName
+                    })
+                    .Select(c => new CurtrialbalViewModel
+                    {
+                        Acctcd = c.Key.Acctcd,
+                        AcctName = c.Key.AcctName,
+                        Debit = c.Sum(x => x.DrCr ? 0m : x.Amount),
+                        Credit = c.Sum(x => x.DrCr ? x.Amount : 0),
+                        Bal = 0m
+                    });
+
+                foreach (var trialBal in curtrialbaldoc)
+                {
+                    trialBal.Bal = trialBal.Debit - trialBal.Credit;
+                }
 
                 TempData["success"] = "Success!";
 
