@@ -103,28 +103,28 @@ namespace TaxDeclaration.Controllers
 
                 // Verified
                 var cvHeaderx = checkVoucherHeaders
-                    .Select(h => new
+                    .Select(h => new CvheaderxViewModel
                     {
                         CvNo = h.CheckVoucherHeaderNo,
                         TranDate = h.Date,
-                        h.Payee,
+                        Payee = h.Payee,
                         BankCode = h.BankAccountNumber,
                         BankName = h.BankAccountNumber,
-                        h.CheckNo,
+                        CheckNo = h.CheckNo,
                         Amount = h.Total,
-                        h.CheckDate,
-                        h.Particulars,
-                        h.CreatedBy,
-                        AcctCd = (string)null,
-                        BsNo = h.Type.ToUpper(),
+                        CheckDate = h.CheckDate,
+                        Particulars = h.Particulars,
+                        CreatedBy = h.CreatedBy,
+                        AcctCd = null,
+                        BsNo = h.Type?.ToUpper(),
                         CheckClearing = h.DcrDate,
-                        NameCategory = (string)null,
+                        NameCategory = null,
                         IsCancelled = h.CanceledBy != null,
                         ChkClear = h.DcrDate,
-                        h.Type,
-                        h.Reference,
-                        h.Category,
-                        h.CvType
+                        Type = h.Type,
+                        Reference = h.Reference,
+                        Category = h.Category,
+                        CvType = h.CvType
                     })
                     .ToList();
 
@@ -134,15 +134,15 @@ namespace TaxDeclaration.Controllers
                 // Verified
                 var cvDetailx = checkVoucherDetails
                     .Where(d => !d.IsDisplayEntry && (cvNoFromcvheaderx.Contains(d.TransactionNo!.Trim()) || referenceFromcvheaderx.Contains(d.TransactionNo!.Trim())))
-                    .Select(d => new
+                    .Select(d => new CvdetailxViewModel
                     {
                         CvNo = d.TransactionNo,
                         SeqId = d.CheckVoucherDetailId,
-                        Amount = d.Debit != 0 || d.Debit == null ? d.Debit : d.Credit,
-                        DrCr = d.Debit == 0 || d.Debit == null,
+                        Amount = d.Debit.GetValueOrDefault() != 0 ? d.Debit : d.Credit,
+                        DrCr = d.Debit.GetValueOrDefault() == 0,
                         Acctcd = d.AccountNo,
-                        d.IsDisplayEntry,
-                        d.Header
+                        IsDisplayEntry = d.IsDisplayEntry,
+                        Header = d.Header
                     })
                     .ToList();
 
@@ -176,10 +176,10 @@ namespace TaxDeclaration.Controllers
                 // Verified
                 // DETAILS + HEADER: WITH EMPTY FIELDS
                 var curcvheader = temp2
-                    .Select(d => new
+                    .Select(d => new CurcvheaderViewModel
                     {
                         CvDtl = d.CvNo,
-                        d.Header,
+                        Header = d.Header,
                         CashpoDate = new DateOnly(),
                         DCRDate = new DateOnly(),
                         AccountNo = (string)null,
@@ -190,7 +190,7 @@ namespace TaxDeclaration.Controllers
                         DateTo = new DateOnly(),
                         AtcCode = (string)null,
                         Percent = (decimal)0,
-                        Payprname = (string)null,
+                        PayorName = (string)null,
                         PayeeName = (string)null,
                         Tin = (string)null,
                         Total = (decimal)0,
@@ -285,7 +285,7 @@ namespace TaxDeclaration.Controllers
                     .ToList();
 
                 // Verified
-                var cventriesv2 = (from d in curcvheader
+                var cventries = (from d in curcvheader
                     join h in cvDetailGroup on d.Header.CvNo equals h.CvNo
                     join a in detail_accounts
                         on new { AcctCd = h.Acctcd.Trim(), DrCr = h.DrCr }
@@ -340,7 +340,7 @@ namespace TaxDeclaration.Controllers
                         a.Header.Particulars,
                         a.Header.Reference,
                         a.Header.Category,
-                        BAmount = b.Amount,
+                        b.Amount,
                         b.DrCr,
                         b.Acctcd,
                         b.SeqId,
@@ -351,10 +351,331 @@ namespace TaxDeclaration.Controllers
                     .ThenBy(x => x.ColNum)
                     .ToList();
 
-
-
-
                 #endregion == Data Processing ==
+
+                #region == Assign DCR and 2307 values to cv ==
+
+                foreach (var cv in curcvheader)
+                {
+                    var dcrEntry = dcrMainDisbursements.Where(dcr => dcr.VoucherNo == cv.Header.CvNo).FirstOrDefault();
+
+                    if (dcrEntry != null)
+                    {
+                        cv.CashpoDate = dcrEntry.CashPoDate;
+                        cv.DCRDate = dcrEntry.DcrDate;
+                        cv.AccountNo = dcrEntry.AccountNo;
+                        cv.StnCode = dcrEntry.StnCode;
+                        if(dcrEntry.AccountNo != cv.Header.BankCode)
+                        {
+                            cv.Rem = "DIFFERENT BANK CODE";
+                        }
+                    }
+                }
+
+                foreach(var cv in curcvheader)
+                {
+                    var cur = cur2307.Where(c => c.CvNo.Trim() == cv.Header.CvNo.Trim() && c.DownloadFrom.Contains("IBS")).FirstOrDefault();
+
+                    if (cur != null)
+                    {
+                        cv.DateFrom = cur.DateFrom;
+                        cv.DateTo = cur.DateTo;
+                        cv.AtcCode = cur.AtcCode;
+                        cv.AtcDesc = cur.Desc;
+                        cv.PayeeName = cur.PayeeName;
+                        cv.PayorName = cur.PayorName;
+                        cv.Tin = $"{cur.TinA}-{cur.TinB}-{cur.TinC}-{cur.TinD}";
+                        cv.Percent = cur.Percent;
+                        cv.Total = cur.Total;
+                        cv.Amt2307 = cur.Amount;
+                        cv.NMonth = cur.RMonth;
+                        cv.NYear = cur.RYear;
+                    }
+                }
+
+                foreach (var cv in curcvheader)
+                {
+                    var vat = 0m;
+
+                    if((cv.Amt2307.HasValue && cv.Amt2307 != 0) && (cv.Percent.HasValue && cv.Percent!= 0))
+                    {
+                        cv.EwtShouldBe = cv.Amt2307/(cv.Percent/100);
+                    }
+
+                    var cvEntry = cventries
+                        .Where(c => c.CvNo == cv.Header.CvNo 
+                        && c.Acctcd.Trim() == "101060200" 
+                        && c.Acctcd.Trim() == "V00-17-101")
+                        .FirstOrDefault();
+
+                    if (cvEntry != null)
+                    {
+                        vat = (cvEntry.Amount ?? 0m) / 0.12m;
+
+                        cv.EwtAmt = cvEntry.Amount;
+                        cv.EwtAcctNo = cvEntry.Acctcd;
+                        cv.EwtDesc = cvEntry.AcctName;
+                        cv.EwtOk = true;
+                        cv.VatShouldBe = vat;
+                    }
+                    else
+                    {
+                        if (cv.EwtShouldBe.HasValue && cv.EwtShouldBe != 0)
+                        {
+                            var ewt = cv.EwtShouldBe;
+                            
+                            var cvEntry2 = cventries
+                                .Where(c => c.CvNo == cv.Header.CvNo && c.Amount >= ewt-1 && c.Amount <= ewt+1)
+                                .FirstOrDefault();
+
+                            if(cvEntry2 != null)
+                            {
+                                cv.VatAmt = cvEntry2.Amount;
+                                cv.VatAcctNo = cvEntry2.Acctcd;
+                                cv.VatDesc = cvEntry2.AcctName;
+                                cv.VatOk = true;
+                            }
+                        }
+                    }
+
+                    #region == VAT and EWT ==
+
+                    // credit included
+                    if (!cv.VatAmt.HasValue && cv.VatAmt == 0)
+                    {
+                        var amt = 0m;
+                        var ctr = 0m;
+                        var acct = string.Empty;
+                        var name = string.Empty;
+
+                        var acctList = new[] {
+                            "101060200",
+                            "101060300",
+                            "101010100"
+                        };
+
+                        var cvEntriesTemp = cvEntries2
+                            .Where(c => c.CvNo == cv.Header.CvNo
+                            && (acctList.Contains(c.Acctcd.Trim()) || c.Acctcd.Trim().StartsWith("201030"))
+                            && !c.Acctcd.Trim().StartsWith("V00")).ToList();
+
+                        if (cvEntriesTemp != null)
+                        {
+                            foreach (var cvEntryTemp in cvEntriesTemp)
+                            {
+                                amt = amt + (cvEntryTemp.DrCr ? (cvEntryTemp.Amount * -1) : cvEntryTemp.Amount) ?? 0m;
+                                ctr = ctr + 1;
+
+                                if (acct == string.Empty)
+                                {
+                                    acct = cvEntryTemp.Acctcd;
+                                    name = cvEntryTemp.AcctName;
+                                }
+
+                                if (acct != cvEntryTemp.Acctcd)
+                                {
+                                    acct = "SUM OF ";
+                                }
+                            }
+                        }
+
+                        if (cv.EwtShouldBe >= amt - 5 && cv.EwtShouldBe <= amt + 5)
+                        {
+                            if (acct == "SUM OF ")
+                            {
+                                cv.VatAmt = amt;
+                                cv.VatAcctNo = "MULTIPLE";
+                                cv.VatDesc = $"SUM OF {ctr.ToString()} ENTRIES";
+                            }
+                            else
+                            {
+                                cv.VatAmt = amt;
+                                cv.VatAcctNo = acct;
+                                cv.VatDesc = name;
+                                cv.VatOk = true;
+                            }
+                        }
+                    }
+
+                    // credit excluded
+                    if (!cv.VatAmt.HasValue && cv.VatAmt == 0)
+                    {
+                        var amt = 0m;
+                        var ctr = 0m;
+                        var acct = string.Empty;
+                        var name = string.Empty;
+
+                        var acctList = new[] {
+                            "101060200",
+                            "101060300",
+                            "101010100"
+                        };
+
+                        var cvEntriesTemp = cvEntries2
+                            .Where(c => c.CvNo == cv.Header.CvNo
+                            && (acctList.Contains(c.Acctcd.Trim()) || c.Acctcd.Trim().StartsWith("201030"))
+                            && !c.Acctcd.Trim().StartsWith("V00")).ToList();
+
+                        if (cvEntriesTemp != null)
+                        {
+                            foreach (var cvEntryTemp in cvEntriesTemp)
+                            {
+                                amt = amt + (cvEntryTemp.DrCr ? 0 : cvEntryTemp.Amount) ?? 0m;
+                                ctr = ctr + 1;
+
+                                if (acct == string.Empty)
+                                {
+                                    acct = cvEntryTemp.Acctcd;
+                                    name = cvEntryTemp.AcctName;
+                                }
+
+                                if (acct != cvEntryTemp.Acctcd)
+                                {
+                                    acct = "SUM OF ";
+                                }
+                            }
+                        }
+
+                        if (cv.EwtShouldBe >= amt - 5 && cv.EwtShouldBe <= amt + 5)
+                        {
+                            if (acct == "SUM OF ")
+                            {
+                                cv.VatAmt = amt;
+                                cv.VatAcctNo = "MULTIPLE";
+                                cv.VatDesc = $"SUM OF {ctr.ToString()} ENTRIES";
+                            }
+                            else
+                            {
+                                cv.VatAmt = amt;
+                                cv.VatAcctNo = acct;
+                                cv.VatDesc = name;
+                                cv.VatOk = true;
+                            }
+                        }
+                    }
+
+                    // credit included (2)
+                    if (!cv.VatAmt.HasValue && cv.VatAmt == 0)
+                    {
+                        var amt = 0m;
+                        var ctr = 0m;
+                        var acct = string.Empty;
+                        var name = string.Empty;
+
+                        var acctList = new[] {
+                            "101060200",
+                            "101060300",
+                            "101010100"
+                        };
+
+                        var cvEntriesTemp = cvEntries2
+                            .Where(c => c.CvNo == cv.Header.CvNo
+                            && (acctList.Contains(c.Acctcd.Trim()) || c.Acctcd.Trim().StartsWith("201030"))
+                            && !c.Acctcd.Trim().StartsWith("V00")).ToList();
+
+                        if (cvEntriesTemp != null)
+                        {
+                            foreach (var cvEntryTemp in cvEntriesTemp)
+                            {
+                                amt = amt + (cvEntryTemp.DrCr ? cvEntryTemp.Amount*-1 : cvEntryTemp.Amount) ?? 0m;
+                                ctr = ctr + 1;
+
+                                if (acct == string.Empty)
+                                {
+                                    acct = cvEntryTemp.Acctcd;
+                                    name = cvEntryTemp.AcctName;
+                                }
+
+                                if (acct != cvEntryTemp.Acctcd)
+                                {
+                                    acct = "SUM OF ";
+                                }
+                            }
+                        }
+
+                        if (cv.VatShouldBe >= amt - 5 && cv.VatShouldBe <= amt + 5)
+                        {
+                            if (acct == "SUM OF ")
+                            {
+                                cv.VatAmt = amt;
+                                cv.VatAcctNo = "MULTIPLE";
+                                cv.VatDesc = $"SUM OF {ctr.ToString()} ENTRIES";
+                            }
+                            else
+                            {
+                                cv.VatAmt = amt;
+                                cv.VatAcctNo = acct;
+                                cv.VatDesc = name;
+                                cv.VatOk = true;
+                            }
+                        }
+                    }
+
+                    // credit excluded (2)
+                    if (!cv.VatAmt.HasValue && cv.VatAmt == 0)
+                    {
+                        var amt = 0m;
+                        var ctr = 0m;
+                        var acct = string.Empty;
+                        var name = string.Empty;
+
+                        var acctList = new[] {
+                            "101060200",
+                            "101060300",
+                            "101010100"
+                        };
+
+                        var cvEntriesTemp = cvEntries2
+                            .Where(c => c.CvNo == cv.Header.CvNo
+                            && (acctList.Contains(c.Acctcd.Trim()) || c.Acctcd.Trim().StartsWith("201030"))
+                            && !c.Acctcd.Trim().StartsWith("V00")).ToList();
+
+                        if (cvEntriesTemp != null)
+                        {
+                            foreach (var cvEntryTemp in cvEntriesTemp)
+                            {
+                                amt = amt + (cvEntryTemp.DrCr ? 0 : cvEntryTemp.Amount) ?? 0m;
+                                ctr = ctr + 1;
+
+                                if (acct == string.Empty)
+                                {
+                                    acct = cvEntryTemp.Acctcd;
+                                    name = cvEntryTemp.AcctName;
+                                }
+
+                                if (acct != cvEntryTemp.Acctcd)
+                                {
+                                    acct = "SUM OF ";
+                                }
+                            }
+                        }
+
+                        if (cv.VatShouldBe >= amt - 5 && cv.VatShouldBe <= amt + 5)
+                        {
+                            if (acct == "SUM OF ")
+                            {
+                                cv.VatAmt = amt;
+                                cv.VatAcctNo = "MULTIPLE";
+                                cv.VatDesc = $"SUM OF {ctr.ToString()} ENTRIES";
+                            }
+                            else
+                            {
+                                cv.VatAmt = amt;
+                                cv.VatAcctNo = acct;
+                                cv.VatDesc = name;
+                                cv.VatOk = true;
+                            }
+                        }
+                    }
+
+                    #endregion == VAT and EWT
+
+
+
+
+                }
+
+                #endregion == Assign DCR and 2307 values to cv ==
 
                 #region == Generate Report ==
 

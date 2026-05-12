@@ -171,8 +171,9 @@ namespace TaxDeclaration.Services.Dbf
                     {
                         StnCode = dbf["STNCODE"]?.ToString(),
                         AccountNo = dbf["ACCOUNTNO"]?.ToString(),
-                        CashPoDate = ToDate(dbf["CASHPODATE"]),
-                        DcrDate = ToDate(dbf["DCRDATE"])
+                        CashPoDate = DateOnly.TryParse(dbf["CASHPODATE"]?.ToString(), out var cashpodate) ? cashpodate : (DateOnly?)null,
+                        DcrDate = DateOnly.TryParse(dbf["DCRDATE"]?.ToString(), out var dcrDate) ? dcrDate : (DateOnly?)null,
+                        VoucherNo = dbf["VOUCHER_NO"]?.ToString()
                     };
 
                     records.Add(record);
