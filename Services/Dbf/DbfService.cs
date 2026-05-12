@@ -4,6 +4,7 @@ using Microsoft.VisualBasic;
 using Npgsql;
 using System.Data;
 using System.Data.OleDb;
+using System.Globalization;
 using System.Text;
 using TaxDeclaration.Models;
 using TaxDeclaration.Models.ViewModels;
@@ -167,15 +168,32 @@ namespace TaxDeclaration.Services.Dbf
             {
                 if (dbf["CASHPODATE"] != null || dbf["DCRDATE"] != null)
                 {
+                    var rawCashPoDate = dbf["CASHPODATE"]?.ToString()?.Trim();
+                    var cashpoDate = DateTime.TryParseExact(rawCashPoDate,
+                        new[] { "d MMM yyyy hh:mm:ss tt", "MM/dd/yyyy", "M dd yyyy" },
+                        CultureInfo.InvariantCulture,
+                        DateTimeStyles.None,
+                        out var cashpoDateParsed)
+                        ? DateOnly.FromDateTime(cashpoDateParsed)
+                        : (DateOnly?)null;
+
+                    var rawDcrDate = dbf["DCRDATE"]?.ToString()?.Trim();
+                    var dcrDate = DateTime.TryParseExact(rawDcrDate,
+                        new[] { "d MMM yyyy hh:mm:ss tt", "MM/dd/yyyy", "M dd yyyy" },
+                        CultureInfo.InvariantCulture,
+                        DateTimeStyles.None,
+                        out var dcrDateParsed)
+                        ? DateOnly.FromDateTime(dcrDateParsed)
+                        : (DateOnly?)null;
+
                     var record = new DCRMainDisbursementViewModel
                     {
                         StnCode = dbf["STNCODE"]?.ToString(),
                         AccountNo = dbf["ACCOUNTNO"]?.ToString(),
-                        CashPoDate = DateOnly.TryParse(dbf["CASHPODATE"]?.ToString(), out var cashpodate) ? cashpodate : (DateOnly?)null,
-                        DcrDate = DateOnly.TryParse(dbf["DCRDATE"]?.ToString(), out var dcrDate) ? dcrDate : (DateOnly?)null,
+                        CashPoDate = cashpoDate == default ? (DateOnly?)null : cashpoDate,
+                        DcrDate = dcrDate == default ? (DateOnly?)null : dcrDate,
                         VoucherNo = dbf["VOUCHER_NO"]?.ToString()
                     };
-
                     records.Add(record);
                 }
             }

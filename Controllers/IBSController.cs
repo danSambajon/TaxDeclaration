@@ -83,7 +83,7 @@ namespace TaxDeclaration.Controllers
 
                 #endregion == Getting data from sources ==
 
-                #region == Data Processing ==
+                #region == Cursors ==
 
                 foreach (FilprideCheckVoucherHeader header in checkVoucherHeaders)
                 {
@@ -182,37 +182,7 @@ namespace TaxDeclaration.Controllers
                         Header = d.Header,
                         CashpoDate = new DateOnly(),
                         DCRDate = new DateOnly(),
-                        AccountNo = (string)null,
-                        StnCode = (string)null,
-                        Company = d.Company == null ? (string)null : d.Company.Co,
-                        Rem = (string)null,
-                        DateFrom = new DateOnly(),
-                        DateTo = new DateOnly(),
-                        AtcCode = (string)null,
-                        Percent = (decimal)0,
-                        PayorName = (string)null,
-                        PayeeName = (string)null,
-                        Tin = (string)null,
-                        Total = (decimal)0,
-                        Amt2307 = (decimal)0,
-                        NMonth = (decimal)0,
-                        NYear = (decimal)0,
-                        VatAmt = (decimal)0,
-                        VatAcctNo = (string)null,
-                        VatDesc = (string)null,
-                        EwtAmt = (decimal)0,
-                        EwtAcctNo = (string)null,
-                        EwtDesc = (string)null,
-                        VatShouldBe = (decimal)0,
-                        VatVariance = (decimal)0,
-                        VatOk = false,
-                        EwtShouldBe = (decimal)0,
-                        EwtVariance = (decimal)0,
-                        EwtOk = false,
-                        LedgerDebit = (decimal)0,
-                        LedgerAcctNo = (string)null,
-                        LedgerDesc = (string)null,
-                        RowNum = (string)null
+                        Company = d.Company == null ? (string)null : d.Company.Co
                     })
                     .Where(d => d.Header.TranDate >= viewModel.DateFrom && d.Header.TranDate <= viewModel.DateTo)
                     .ToList();
@@ -351,13 +321,14 @@ namespace TaxDeclaration.Controllers
                     .ThenBy(x => x.ColNum)
                     .ToList();
 
-                #endregion == Data Processing ==
+                #endregion == Cursors ==
 
                 #region == Assign DCR and 2307 values to cv ==
 
+                // DCR
                 foreach (var cv in curcvheader)
                 {
-                    var dcrEntry = dcrMainDisbursements.Where(dcr => dcr.VoucherNo == cv.Header.CvNo).FirstOrDefault();
+                    var dcrEntry = dcrMainDisbursements.Where(dcr => dcr.VoucherNo.Trim() == cv.Header.CvNo.Trim()).FirstOrDefault();
 
                     if (dcrEntry != null)
                     {
@@ -370,8 +341,14 @@ namespace TaxDeclaration.Controllers
                             cv.Rem = "DIFFERENT BANK CODE";
                         }
                     }
+                    else
+                    {
+                        cv.CashpoDate = null;
+                        cv.DCRDate = null;
+                    }
                 }
 
+                // 2307
                 foreach(var cv in curcvheader)
                 {
                     var cur = cur2307.Where(c => c.CvNo.Trim() == cv.Header.CvNo.Trim() && c.DownloadFrom.Contains("IBS")).FirstOrDefault();
@@ -393,6 +370,10 @@ namespace TaxDeclaration.Controllers
                     }
                 }
 
+                #endregion == Assign DCR and 2307 values to cv ==
+
+                #region == EWT and VAT ==
+
                 foreach (var cv in curcvheader)
                 {
                     var vat = 0m;
@@ -408,6 +389,7 @@ namespace TaxDeclaration.Controllers
                         && c.Acctcd.Trim() == "V00-17-101")
                         .FirstOrDefault();
 
+                    // VAT
                     if (cvEntry != null)
                     {
                         vat = (cvEntry.Amount ?? 0m) / 0.12m;
@@ -425,7 +407,7 @@ namespace TaxDeclaration.Controllers
                             var ewt = cv.EwtShouldBe;
                             
                             var cvEntry2 = cventries
-                                .Where(c => c.CvNo == cv.Header.CvNo && c.Amount >= ewt-1 && c.Amount <= ewt+1)
+                                .Where(c => c.CvNo.Trim() == cv.Header.CvNo.Trim() && c.Amount >= ewt-1 && c.Amount <= ewt+1)
                                 .FirstOrDefault();
 
                             if(cvEntry2 != null)
@@ -438,9 +420,7 @@ namespace TaxDeclaration.Controllers
                         }
                     }
 
-                    #region == VAT and EWT ==
-
-                    // credit included
+                    // credit included ewt
                     if (!cv.VatAmt.HasValue && cv.VatAmt == 0)
                     {
                         var amt = 0m;
@@ -496,8 +476,8 @@ namespace TaxDeclaration.Controllers
                             }
                         }
                     }
-
-                    // credit excluded
+                     
+                    // credit excluded ewt
                     if (!cv.VatAmt.HasValue && cv.VatAmt == 0)
                     {
                         var amt = 0m;
@@ -554,7 +534,7 @@ namespace TaxDeclaration.Controllers
                         }
                     }
 
-                    // credit included (2)
+                    // credit included (2) vat
                     if (!cv.VatAmt.HasValue && cv.VatAmt == 0)
                     {
                         var amt = 0m;
@@ -611,7 +591,7 @@ namespace TaxDeclaration.Controllers
                         }
                     }
 
-                    // credit excluded (2)
+                    // credit excluded (2) vat
                     if (!cv.VatAmt.HasValue && cv.VatAmt == 0)
                     {
                         var amt = 0m;
@@ -667,15 +647,13 @@ namespace TaxDeclaration.Controllers
                             }
                         }
                     }
-
-                    #endregion == VAT and EWT
-
-
-
-
                 }
 
-                #endregion == Assign DCR and 2307 values to cv ==
+                #endregion == EWT and VAT ==
+
+
+
+                TempData["success"] = "Success!";
 
                 #region == Generate Report ==
 
@@ -764,8 +742,6 @@ namespace TaxDeclaration.Controllers
                 }
 
                 #endregion == Generate Report ==
-
-                TempData["success"] = "Success!";
             }
             catch (Exception ex)
             {
