@@ -73,5 +73,7 @@
         public string? LedgerDesc { get; set; }
 
         public string? RowNum { get; set; }
+
+        public string? CvType { get; set; }
     }
 }
