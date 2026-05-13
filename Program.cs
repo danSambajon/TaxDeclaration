@@ -5,6 +5,7 @@ using System.Data.OleDb;
 using TaxDeclaration.Data;
 using TaxDeclaration.Services;
 using TaxDeclaration.Services.Dbf;
+using TaxDeclaration.Services.Excel;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,6 +22,7 @@ builder.Services.AddControllersWithViews();
 
 builder.Services.AddScoped<DbfService>();
 builder.Services.AddScoped<IBSConnectionService>();
+builder.Services.AddScoped<IBSDisbursementExcelService>();
 
 var app = builder.Build();
 
