@@ -3,10 +3,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
+using System.Reflection.PortableExecutable;
+using System.Runtime.ConstrainedExecution;
 using TaxDeclaration.Models;
 using TaxDeclaration.Models.ViewModels;
 using TaxDeclaration.Services;
 using TaxDeclaration.Services.Dbf;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace TaxDeclaration.Controllers
 {
@@ -227,10 +230,10 @@ namespace TaxDeclaration.Controllers
 
                 // Verified
                 var detail_accounts = cvDetailGroup
-                    .Select(d => new
+                    .Select(d => new DetailAccountsViewModel
                     {
-                        d.DrCr,
-                        d.Acctcd,
+                        DrCr = d.DrCr,
+                        Acctcd = d.Acctcd,
                         AcctName = chartOfAccounts.Where(coa => coa.AccountNumber == d.Acctcd).FirstOrDefault().AccountName,
                         ColNum = (decimal)0
                     })
@@ -262,25 +265,25 @@ namespace TaxDeclaration.Controllers
                         equals new { AcctCd = a.Acctcd.Trim(), DrCr = a.DrCr }
                         into leftJoin
                     from c in leftJoin.DefaultIfEmpty()
-                    select new
+                    select new CvEntriesViewModel
                     {
-                        d.Header.CvNo,
-                        d.Header.TranDate,
-                        d.Header.Payee,
-                        d.Header.BankCode,
-                        d.Header.BankName,
+                        CvNo = d.Header.CvNo,
+                        TranDate = d.Header.TranDate,
+                        Payee = d.Header.Payee,
+                        BankCode = d.Header.BankCode,
+                        BankName = d.Header.BankName,
                         CvAmount = d.Header.Amount,
-                        d.Header.CheckNo,
-                        d.Header.CheckDate,
-                        d.Header.BsNo,
-                        d.Header.ChkClear,
-                        d.Header.Particulars,
-                        h.Amount,
-                        h.DrCr,
-                        h.Acctcd,
-                        c.AcctName,
-                        c.ColNum,
-                        d.Header.Reference
+                        CheckNo = d.Header.CheckNo,
+                        CheckDate = d.Header.CheckDate,
+                        BsNo = d.Header.BsNo,
+                        ChkClear = d.Header.ChkClear,
+                        Particulars = d.Header.Particulars,
+                        Amount = h.Amount,
+                        DrCr = h.DrCr,
+                        Acctcd = h.Acctcd,
+                        AcctName = c.AcctName,
+                        ColNum = c.ColNum,
+                        Reference = d.Header.Reference
                     })
                     .OrderBy(h => h.CvNo)
                     .ThenBy(h => h.AcctName)
@@ -295,25 +298,25 @@ namespace TaxDeclaration.Controllers
                         equals new { AcctCd = c.Acctcd.Trim(), DrCr = c.DrCr }
                         into leftJoin
                     from c in leftJoin.DefaultIfEmpty()
-                    select new
+                    select new CvEntriesViewModel
                     {
-                        a.Header.CvNo,
-                        a.Header.TranDate,
-                        a.Header.Payee,
-                        a.Header.BankCode,
-                        a.Header.BankName,
+                        CvNo = a.Header.CvNo,
+                        TranDate = a.Header.TranDate,
+                        Payee = a.Header.Payee,
+                        BankCode = a.Header.BankCode,
+                        BankName = a.Header.BankName,
                         CvAmount = a.Header.Amount,
-                        a.Header.CheckNo,
-                        a.Header.CheckDate,
-                        a.Header.BsNo,
-                        a.Header.ChkClear,
-                        a.Header.Particulars,
-                        a.Header.Reference,
-                        a.Header.Category,
-                        b.Amount,
-                        b.DrCr,
-                        b.Acctcd,
-                        b.SeqId,
+                        CheckNo = a.Header.CheckNo,
+                        CheckDate = a.Header.CheckDate,
+                        BsNo = a.Header.BsNo,
+                        ChkClear = a.Header.ChkClear,
+                        Particulars = a.Header.Particulars,
+                        Reference = a.Header.Reference,
+                        Category = a.Header.Category,
+                        Amount = b.Amount,
+                        DrCr = b.DrCr,
+                        Acctcd = b.Acctcd,
+                        Seqid = b.SeqId,
                         AcctName = c != null ? c.AcctName : null,
                         ColNum = c != null ? c.ColNum : 0,
                     })
@@ -651,6 +654,8 @@ namespace TaxDeclaration.Controllers
 
                 #endregion == EWT and VAT ==
 
+                #region == Trial Balances ==
+
                 // TB
                 var curtrialbal = cvEntries2
                     .GroupBy(c => new
@@ -886,6 +891,182 @@ namespace TaxDeclaration.Controllers
                 }
 
                 TempData["success"] = "Success!";
+
+                #endregion == Trial Balances ==
+
+                #region == Final Cursors ==
+
+                var tempall = cvDetailx
+                    .Select(cv => cv.CvNo)
+                    .Distinct()
+                    .Order()
+                    .ToList();
+
+                var temp2all = cvDetailx
+                    .GroupBy(cv => cv.CvNo)
+                    .Select(cv => new
+                    {
+                        CvNo = cv.Key,
+                        Ctr = cv.Count(),
+                        Records = cv.ToList(),
+                        Header = cvHeaderx.Where(h => h.CvNo == cv.Key).FirstOrDefault(),
+                        Company = companies.Where(c => c.BankCode == cvHeaderx.Where(h => h.CvNo == cv.Key).FirstOrDefault().BankCode).FirstOrDefault()
+                    })
+                    .OrderByDescending(cv => cv.Ctr)
+                    .ToList();
+
+                var curcvheaderall = temp2all
+                    .Select(d => new CurcvheaderViewModel
+                    {
+                        CvDtl = d.CvNo,
+                        Header = d.Header,
+                        CashpoDate = new DateOnly(),
+                        DCRDate = new DateOnly(),
+                        Company = d.Company == null ? (string)null : d.Company.Co
+                    })
+                    .Where(d => d.Header.TranDate >= viewModel.DateFrom && d.Header.TranDate <= viewModel.DateTo)
+                    .ToList();
+
+                var cvDetailGroupAll = cvDetailx
+                    .GroupBy(d => new
+                    {
+                        d.CvNo,
+                        d.DrCr,
+                        d.Acctcd
+                    })
+                    .Select(g => new
+                    {
+                        g.Key.CvNo,
+                        g.Key.DrCr,
+                        g.Key.Acctcd,
+                        Amount = g.Sum(x => x.Amount),
+                        NEntry = g.Count(),
+                        SeqId = g.Max(x => x.SeqId)
+                    })
+                    .OrderBy(x => x.CvNo)
+                    .ThenBy(x => x.SeqId)
+                    .ToList();
+
+                var cvDetailGroup2All = cvDetailx
+                    .Select(d => new
+                    {
+                        d.CvNo,
+                        d.DrCr,
+                        d.Acctcd,
+                        d.Amount,
+                        d.SeqId,
+                        d.IsDisplayEntry
+                    })
+                    .OrderBy(d => d.CvNo)
+                    .ThenBy(d => d.SeqId)
+                    .ToList();
+
+                var detail_accountsall = cvDetailGroup
+                    .Select(d => new DetailAccountsViewModel
+                    {
+                        DrCr = d.DrCr,
+                        Acctcd = d.Acctcd,
+                        AcctName = chartOfAccounts.Where(coa => coa.AccountNumber == d.Acctcd).FirstOrDefault().AccountName,
+                        ColNum = (decimal)0
+                    })
+                    .Distinct()
+                    .OrderBy(d => d.Acctcd)
+                    .ToList();
+
+                var acctgroupall = detail_accounts
+                    .GroupBy(d => new
+                    {
+                        d.DrCr,
+                        d.Acctcd
+                    })
+                    .Select(d => new AcctGroupViewModel
+                    {
+                        Drcr = d.Key.DrCr,
+                        Acc = d.Key.Acctcd,
+                        Ctr = d.Count()
+                    })
+                    .OrderBy(d => d.Acc)
+                    .ToList();
+
+                var cventriesall = (from d in curcvheader
+                                 join h in cvDetailGroup on d.Header.CvNo equals h.CvNo
+                                 join a in detail_accountsall
+                                     on new { AcctCd = h.Acctcd.Trim(), DrCr = h.DrCr }
+                                     equals new { AcctCd = a.Acctcd.Trim(), DrCr = a.DrCr }
+                                     into leftJoin
+                                 from c in leftJoin.DefaultIfEmpty()
+                                 select new CvEntriesViewModel
+                                 {
+                                     CvNo = d.Header.CvNo,
+                                     TranDate = d.Header.TranDate,
+                                     Payee = d.Header.Payee,
+                                     BankCode = d.Header.BankCode,
+                                     BankName = d.Header.BankName,
+                                     CvAmount = d.Header.Amount,
+                                     CheckNo = d.Header.CheckNo,
+                                     CheckDate = d.Header.CheckDate,
+                                     BsNo = d.Header.BsNo,
+                                     ChkClear = d.Header.ChkClear,
+                                     Particulars = d.Header.Particulars,
+                                     Amount = h.Amount,
+                                     DrCr = h.DrCr,
+                                     Acctcd = h.Acctcd,
+                                     AcctName = c.AcctName,
+                                     ColNum = c.ColNum,
+                                     Reference = d.Header.Reference
+                                 })
+                    .OrderBy(h => h.CvNo)
+                    .ThenBy(h => h.Acctcd)
+                    .ToList();
+
+                // Verified
+                var cvEntries2all = (from a in curcvheader
+                                  from b in cvDetailGroup2All
+                                  where a.Header.CvNo == b.CvNo || a.Header.Reference == b.CvNo
+                                  join c in detail_accounts
+                                      on new { AcctCd = b.Acctcd.Trim(), DrCr = b.DrCr }
+                                      equals new { AcctCd = c.Acctcd.Trim(), DrCr = c.DrCr }
+                                      into leftJoin
+                                  from c in leftJoin.DefaultIfEmpty()
+                                  select new CvEntriesViewModel
+                                  {
+                                      CvNo = a.Header.CvNo,
+                                      TranDate = a.Header.TranDate,
+                                      Payee = a.Header.Payee,
+                                      BankCode = a.Header.BankCode,
+                                      BankName = a.Header.BankName,
+                                      CvAmount = a.Header.Amount,
+                                      CheckNo = a.Header.CheckNo,
+                                      CheckDate = a.Header.CheckDate,
+                                      BsNo = a.Header.BsNo,
+                                      ChkClear = a.Header.ChkClear,
+                                      Particulars = a.Header.Particulars,
+                                      Amount = b.Amount,
+                                      DrCr = b.DrCr,
+                                      Acctcd = b.Acctcd,
+                                      AcctName = c != null ? c.AcctName : null,
+                                      ColNum = c != null ? c.ColNum : 0,
+                                      Reference = a.Header.Reference,
+                                      Seqid = b.SeqId,
+                                      CvType = a.Header.CvType,
+                                      Category = a.Header.Category,
+                                      IsDisplayEntry = b.IsDisplayEntry
+                                  })
+                    .OrderBy(x => x.CvNo)
+                    .ThenBy(x => x.ColNum)
+                    .ToList();
+
+
+
+
+
+
+
+
+
+
+
+                #endregion == Final Joins ==
 
                 #region == Generate Report ==
 
