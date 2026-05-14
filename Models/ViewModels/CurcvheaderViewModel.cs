@@ -26,7 +26,7 @@
 
         public string? AtcDesc { get; set; }
 
-        public decimal? Percent { get; set; }
+        public decimal Percent { get; set; }
 
         public string? PayorName { get; set; }
 
@@ -34,39 +34,39 @@
 
         public string? Tin { get; set; }
 
-        public decimal? Total { get; set; }
+        public decimal Total { get; set; }
 
-        public decimal? Amt2307 { get; set; }
+        public decimal Amt2307 { get; set; }
 
-        public decimal? NMonth { get; set; }
+        public decimal NMonth { get; set; }
 
-        public decimal? NYear { get; set; }
+        public decimal NYear { get; set; }
 
-        public decimal? VatAmt { get; set; }
+        public decimal VatAmt { get; set; }
 
         public string? VatAcctNo { get; set; }
 
         public string? VatDesc { get; set; }
 
-        public decimal? EwtAmt { get; set; }
+        public decimal EwtAmt { get; set; }
 
         public string? EwtAcctNo { get; set; }
 
         public string? EwtDesc { get; set; }
 
-        public decimal? VatShouldBe { get; set; }
+        public decimal VatShouldBe { get; set; }
 
-        public decimal? VatVariance { get; set; }
+        public decimal VatVariance { get; set; }
 
         public bool? VatOk { get; set; }
 
-        public decimal? EwtShouldBe { get; set; }
+        public decimal EwtShouldBe { get; set; }
 
-        public decimal? EwtVariance { get; set; }
+        public decimal EwtVariance { get; set; }
 
         public bool? EwtOk { get; set; }
 
-        public decimal? LedgerDebit { get; set; }
+        public decimal LedgerDebit { get; set; }
 
         public string? LedgerAcctNo { get; set; }
 

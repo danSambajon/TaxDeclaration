@@ -6,7 +6,10 @@ namespace TaxDeclaration.Services.Excel
 {
     public class IBSDisbursementExcelService
     {
-        public void ProcessReport1(ExcelWorksheet worksheet, GenerateTaxDeclarationViewModel viewModel)
+        public void ProcessReport1(ExcelWorksheet worksheet, 
+            GenerateTaxDeclarationViewModel viewModel, 
+            List<CurcvheaderViewModel> curcvheader,
+            List<CvEntriesViewModel> cventries)
         {
 
             #region == Title Area ==
@@ -28,6 +31,8 @@ namespace TaxDeclaration.Services.Excel
             mergedCells.Value = "Both Remitted and Unremitted";
 
             #endregion == Title Area ==
+
+            var currencyFormat = "#,##0.00";
 
             #region == Headers ==
 
@@ -163,16 +168,115 @@ namespace TaxDeclaration.Services.Excel
 
             #endregion == Headers ==
 
-            #region == Column ==
+            #region == Values ==
 
-            var currencyFormat = "#,##0.00";
+            row = 6;
+
+            foreach (var cv in curcvheader)
+            {
+                col = 1;
+
+                worksheet.Cells[row, col].Value = cv.Header!.Reference != null ? $"{cv.Header.CvNo} / {cv.Header.Reference}" : cv.Header.CvNo; col++;
+
+                worksheet.Cells[row, col].Value = cv.Header.TranDate; col++; // 2 date
+                worksheet.Cells[row, col].Value = cv.Header.Payee?.Trim(); col++; //3
+                worksheet.Cells[row, col].Value = cv.Header.Particulars?.Trim(); col++; //4
+                worksheet.Cells[row, col].Value = cv.Header.CheckNo?.Trim(); col++;//5
+                worksheet.Cells[row, col].Value = cv.Header.CheckDate.ToString()?.Trim(); col++; // 6 date
+                worksheet.Cells[row, col].Value = cv.Header.BankCode; col++;//7
+
+                //worksheet.Cells[row, col].Value = cv.AccountNo; col++;
+                //worksheet.Cells[row, col].Value = cv.CashpoDate; col++;
+
+                worksheet.Cells[row, col].Value = cv.DCRDate; col++;//8
+                worksheet.Cells[row, col].Value = cv.Header.Amount; col++; // 9
+                worksheet.Cells[row, col].Value = cv.Header.BsNo; col++; // 10
+                col++; // 11
+                worksheet.Cells[row, col].Value = cv.VatAmt; col++; // 12
+                worksheet.Cells[row, col].Value = cv.VatAcctNo; col++;
+                worksheet.Cells[row, col].Value = cv.VatDesc; col++;
+                worksheet.Cells[row, col].Value = cv.EwtAmt; col++;
+                worksheet.Cells[row, col].Value = cv.EwtAcctNo; col++;
+                worksheet.Cells[row, col].Value = cv.EwtDesc; col++;
+
+                col = 27;
+                worksheet.Cells[row, col].Value = cv.VatShouldBe; col++; //27
+                worksheet.Cells[row, col].Value = cv.VatAmt - cv.VatShouldBe; col++; //28
+
+                col = 34; // 29
+
+                var cost = 0m;
+                var expDr = 0m;
+                var expCr = 0m;
+                var capex = 0m;
+                var vat = 0m;
+                var def = 0m;
+                var ewt = 0m;
+
+                var selectedCvEntries = cventries
+                    .Where(cv2 => cv2.CvNo!.Trim() == cv.Header.CvNo!.Trim())
+                    .ToList();
+
+                foreach(var selectedcventry in selectedCvEntries)
+                {
+                    if (selectedcventry.Acctcd.StartsWith("50"))
+                    {
+                        cost += selectedcventry.DrCr ? selectedcventry.Amount * -1 ?? 0m : selectedcventry.Amount ?? 0m;
+                    }
+                    if (selectedcventry.Acctcd.StartsWith("55") || selectedcventry.Acctcd.StartsWith("65"))
+                    {
+                        expDr += selectedcventry.DrCr ? 0m : selectedcventry.Amount ?? 0m;
+                        expCr += selectedcventry.DrCr ? selectedcventry.Amount*-1 ?? 0m : 0m;
+                    }
+                    if (selectedcventry.Acctcd.StartsWith("102010"))
+                    {
+                        capex += selectedcventry.DrCr ? selectedcventry.Amount * -1 ?? 0m : selectedcventry.Amount ?? 0m;
+                    }
+                    if (selectedcventry.Acctcd.StartsWith("101060200"))
+                    {
+                        vat += selectedcventry.DrCr ? selectedcventry.Amount * -1 ?? 0m : selectedcventry.Amount ?? 0m;
+                    }
+                    if (selectedcventry.Acctcd.StartsWith("101060300"))
+                    {
+                        def += selectedcventry.DrCr ? selectedcventry.Amount * -1 ?? 0m : selectedcventry.Amount ?? 0m;
+                    }
+                    if (selectedcventry.Acctcd.StartsWith("201030"))
+                    {
+                        ewt += selectedcventry.DrCr ? selectedcventry.Amount * -1 ?? 0m : selectedcventry.Amount ?? 0m;
+                    }
+                }
+
+                worksheet.Cells[row, col].Value = cost; col++; //34
+                worksheet.Cells[row, col].Value = expDr; col++; //35
+                worksheet.Cells[row, col].Value = expCr; col++; //36
+                worksheet.Cells[row, col].Value = capex; col++; //37
+                worksheet.Cells[row, col].Value = vat; col++; //38
+                worksheet.Cells[row, col].Value = def; col++; //39
+                worksheet.Cells[row, col].Value = ewt; col += 2; //40
+
+                if(cv.DCRDate == null || cv.DCRDate > cv.DateTo)
+                {
+                    worksheet.Cells[row, col].Value = cv.Header.Amount; //42
+                }
+
+                worksheet.Cells[row, 2].Style.Numberformat.Format = "dd-mmm-yyyy";
+                worksheet.Cells[row, 6].Style.Numberformat.Format = "dd-mmm-yyyy";
+                worksheet.Cells[row, 9].Style.Numberformat.Format = currencyFormat;
+                worksheet.Cells[row, 34, row, 42].Style.Numberformat.Format = currencyFormat;
+
+                row++;
+            }
+
+            #endregion == Values ==
+
+            #region == Cell sizes ==
 
             worksheet.View.FreezePanes(6, 1);
             worksheet.Columns.AutoFit();
 
             for (int ctr = 1; ctr != 45; ctr++)
             {
-                worksheet.Column(ctr).Width = 20;
+                worksheet.Column(ctr).Width = 25;
             }
 
             foreach (var colTemp in new List<int> { 11, 18, 26, 29, 33, 41 })
@@ -180,7 +284,9 @@ namespace TaxDeclaration.Services.Excel
                 worksheet.Column(colTemp).Width = 1;
             }
 
-            #endregion == Column ==
+            worksheet.Row(5).Height = 45;
+
+            #endregion == Cell sizes ==
         }
     }
 }
