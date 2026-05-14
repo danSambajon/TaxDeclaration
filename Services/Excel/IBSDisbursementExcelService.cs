@@ -656,5 +656,78 @@ namespace TaxDeclaration.Services.Excel
 
             #endregion == Cell sizes ==
         }
+
+        public void ProcessGeneralLedgerReport(ExcelWorksheet worksheet, GenerateTaxDeclarationViewModel viewModel)
+        {
+
+            #region == Title Area ==
+
+            var mergedCells = worksheet.Cells["A1:C1"];
+            mergedCells.Merge = true;
+            mergedCells.Value = $"IBS DISBURSEMENT VOUCHERS - {viewModel.SelectedCompany} - GENERAL LEDGER";
+            mergedCells.Style.Font.Size = 13;
+            mergedCells.Style.Font.Bold = true;
+
+            worksheet.Cells[1, 5].Value = $"Report generated: {DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}";
+
+            mergedCells = worksheet.Cells["A2:C2"];
+            mergedCells.Merge = true;
+            mergedCells.Value = $"Voucher's Check Date from {viewModel.DateFrom} to {viewModel.DateTo}";
+
+            mergedCells = worksheet.Cells["A3:C3"];
+            mergedCells.Merge = true;
+            mergedCells.Value = "Both Remitted and Unremitted";
+
+            #endregion == Title Area ==
+
+            var currencyFormat = "#,##0.00";
+
+            #region == Headers ==
+
+            var row = 4;
+            var col = 1;
+
+            var colSpanStart = col;
+            worksheet.Cells[row, col].Value = "VOUCHER#"; worksheet.Cells[row, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
+            worksheet.Cells[row, col].Value = "VOUCHER DATE"; worksheet.Cells[row, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
+            worksheet.Cells[row, col].Value = "PAYEE"; worksheet.Cells[row, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
+            worksheet.Cells[row, col].Value = "PARTICULAR"; worksheet.Cells[row, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
+            worksheet.Cells[row, col].Value = "CHECK#"; worksheet.Cells[row, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
+            worksheet.Cells[row, col].Value = "CHECK DATE"; worksheet.Cells[row, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
+            worksheet.Cells[row, col].Value = "OTHERS"; worksheet.Cells[row, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
+            worksheet.Cells[row, col].Value = "VCH AMOUNT"; worksheet.Cells[row, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
+            worksheet.Cells[row, col].Value = "DEBIT"; worksheet.Cells[row, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
+            worksheet.Cells[row, col].Value = "CREDIT"; worksheet.Cells[row, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
+            worksheet.Cells[row, col].Value = "ACCOUNT#"; worksheet.Cells[row, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
+            worksheet.Cells[row, col].Value = "ACCOUNT NAME"; worksheet.Cells[row, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
+            var colSpandEnd = col - 1;
+
+            worksheet.Cells[row, colSpanStart, row, colSpandEnd].Style.Fill.PatternType = ExcelFillStyle.Solid;
+            worksheet.Cells[row, colSpanStart, row, colSpandEnd].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.PeachPuff);
+
+            worksheet.Cells[row, 1, row, 12].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            worksheet.Cells[row, 1, row, 12].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+            worksheet.Cells[row, 1, row, 12].Style.Font.Bold = true;
+
+            #endregion == Headers ==
+
+            #region == Values ==
+
+            row = 6;
+
+            #endregion == Values ==
+
+            #region == Cell sizes ==
+
+            worksheet.View.FreezePanes(5, 1);
+            worksheet.Columns.AutoFit();
+
+            for (int ctr = 1; ctr != 4; ctr++)
+            {
+                worksheet.Column(ctr).Width = 25;
+            }
+
+            #endregion == Cell sizes ==
+        }
     }
 }

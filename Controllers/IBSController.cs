@@ -1497,14 +1497,17 @@ namespace TaxDeclaration.Controllers
                     {
                         if (classification == "ALL")
                         {
-                            var report1 = package.Workbook.Worksheets.Add("Rpt#1");
+                            var report1 = package.Workbook.Worksheets.Add("RPT#1");
                             _excel.ProcessHeaderReport(report1, viewModel, curcvheader, cventries);
 
-                            var report2 = package.Workbook.Worksheets.Add("Rpt#2");
+                            var report2 = package.Workbook.Worksheets.Add("RPT#2");
                             _excel.ProcessDetailReport(report2, viewModel, curcvheader, cventries, cvEntries2);
 
-                            var tb1 = package.Workbook.Worksheets.Add("Tb#1");
+                            var tb1 = package.Workbook.Worksheets.Add("TB (#1)");
                             _excel.ProcessTrialBalanceReport(tb1, viewModel);
+
+                            var gl1 = package.Workbook.Worksheets.Add("GL (#1)");
+                            _excel.ProcessGeneralLedgerReport(gl1, viewModel);
                         }
                     }
 
