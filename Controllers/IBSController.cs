@@ -1494,6 +1494,9 @@ namespace TaxDeclaration.Controllers
                     var report1 = package.Workbook.Worksheets.Add("Rpt#1");
                     _excel.ProcessReport1(report1, viewModel, curcvheader, cventries);
 
+                    var report2 = package.Workbook.Worksheets.Add("Rpt#2");
+                    _excel.ProcessReport2(report2, viewModel, curcvheader, cventries, cvEntries2);
+
 
 
                     // var fileName = $"Purchase_Order_Report_{DateTimeHelper.GetCurrentPhilippineTime():yyyyddMMHHmmss}.xlsx";
