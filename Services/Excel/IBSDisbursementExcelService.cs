@@ -32,7 +32,8 @@ namespace TaxDeclaration.Services.Excel
 
             #endregion == Title Area ==
 
-            var currencyFormat = "#,##0.00";
+            // var currencyFormat = "#,##0.00;[Red](#,##0.00)";
+            var currencyFormat = "#,##0.00;[Red](#,##0.00);??;@";
 
             #region == Headers ==
 
@@ -170,6 +171,21 @@ namespace TaxDeclaration.Services.Excel
 
             #region == Values ==
 
+            var vchAmountTotal = 0m;
+            var perCvEntryAmountTotal = 0m;
+            var perCvEntryInputVatAmountTotal = 0m;
+            var vatShouldBeTaxTotal = 0m;
+            var vatVarianceonTaxTotal = 0m;
+            var whtVarianceonTaxTotal = 0m;
+            var cost50Total = 0m;
+            var expenseDebitTotal = 0m;
+            var expenseCreditTotal = 0m;
+            var expenseCapexTotal = 0m;
+            var expenseVatTotal = 0m;
+            var expenseDVatTotal = 0m;
+            var expenseEwtTotal = 0m;
+            var unclearedChecksTotal = 0m;
+
             row = 6;
 
             foreach (var cv in curcvheader)
@@ -178,30 +194,26 @@ namespace TaxDeclaration.Services.Excel
 
                 worksheet.Cells[row, col].Value = cv.Header!.Reference != null ? $"{cv.Header.CvNo} / {cv.Header.Reference}" : cv.Header.CvNo; col++;
 
-                worksheet.Cells[row, col].Value = cv.Header.TranDate; col++; // 2 date
+                worksheet.Cells[row, col].Value = cv.Header.TranDate; col++; // 2
                 worksheet.Cells[row, col].Value = cv.Header.Payee?.Trim(); col++; //3
                 worksheet.Cells[row, col].Value = cv.Header.Particulars?.Trim(); col++; //4
-                worksheet.Cells[row, col].Value = cv.Header.CheckNo?.Trim(); col++;//5
+                worksheet.Cells[row, col].Value = cv.Header.CheckNo?.Trim(); col++; //5
                 worksheet.Cells[row, col].Value = cv.Header.CheckDate.ToString()?.Trim(); col++; // 6 date
-                worksheet.Cells[row, col].Value = cv.Header.BankCode; col++;//7
-
-                //worksheet.Cells[row, col].Value = cv.AccountNo; col++;
-                //worksheet.Cells[row, col].Value = cv.CashpoDate; col++;
-
-                worksheet.Cells[row, col].Value = cv.DCRDate; col++;//8
-                worksheet.Cells[row, col].Value = cv.Header.Amount; col++; // 9
+                worksheet.Cells[row, col].Value = cv.Header.BankCode; col++; //7
+                worksheet.Cells[row, col].Value = cv.DCRDate; col++; //8
+                worksheet.Cells[row, col].Value = cv.Header.Amount; col++; vchAmountTotal += cv.Header.Amount ?? 0m; // 9
                 worksheet.Cells[row, col].Value = cv.Header.BsNo; col++; // 10
                 col++; // 11
-                worksheet.Cells[row, col].Value = cv.VatAmt; col++; // 12
-                worksheet.Cells[row, col].Value = cv.VatAcctNo; col++;
-                worksheet.Cells[row, col].Value = cv.VatDesc; col++;
-                worksheet.Cells[row, col].Value = cv.EwtAmt; col++;
+                worksheet.Cells[row, col].Value = cv.VatAmt; col++; perCvEntryAmountTotal += cv.VatAmt; // 12
+                worksheet.Cells[row, col].Value = cv.VatAcctNo; col++; // 13
+                worksheet.Cells[row, col].Value = cv.VatDesc; col++; // 14
+                worksheet.Cells[row, col].Value = cv.EwtAmt; col++; perCvEntryInputVatAmountTotal += cv.EwtAmt; // 15
                 worksheet.Cells[row, col].Value = cv.EwtAcctNo; col++;
                 worksheet.Cells[row, col].Value = cv.EwtDesc; col++;
 
                 col = 27;
-                worksheet.Cells[row, col].Value = cv.VatShouldBe; col++; //27
-                worksheet.Cells[row, col].Value = cv.VatAmt - cv.VatShouldBe; col++; //28
+                worksheet.Cells[row, col].Value = cv.VatShouldBe; col++; vatShouldBeTaxTotal += cv.VatShouldBe; //27
+                worksheet.Cells[row, col].Value = cv.VatAmt - cv.VatShouldBe; col++; vatVarianceonTaxTotal += (cv.VatAmt - cv.VatShouldBe); //28
 
                 col = 34; // 29
 
@@ -246,28 +258,55 @@ namespace TaxDeclaration.Services.Excel
                     }
                 }
 
-                worksheet.Cells[row, col].Value = cost; col++; //34
-                worksheet.Cells[row, col].Value = expDr; col++; //35
-                worksheet.Cells[row, col].Value = expCr; col++; //36
-                worksheet.Cells[row, col].Value = capex; col++; //37
-                worksheet.Cells[row, col].Value = vat; col++; //38
-                worksheet.Cells[row, col].Value = def; col++; //39
-                worksheet.Cells[row, col].Value = ewt; col += 2; //40
+                worksheet.Cells[row, col].Value = cost; col++; cost50Total += cost; //34
+                worksheet.Cells[row, col].Value = expDr; col++; expenseDebitTotal += expDr; //35
+                worksheet.Cells[row, col].Value = expCr; col++; expenseCreditTotal += expCr; //36
+                worksheet.Cells[row, col].Value = capex; col++; expenseCapexTotal += capex; //37
+                worksheet.Cells[row, col].Value = vat; col++; expenseVatTotal += vat; //38
+                worksheet.Cells[row, col].Value = def; col++; expenseDVatTotal += def; //39
+                worksheet.Cells[row, col].Value = ewt; col += 2; expenseEwtTotal += ewt; //40
 
                 if(cv.DCRDate == null || cv.DCRDate > cv.DateTo)
                 {
-                    worksheet.Cells[row, col].Value = cv.Header.Amount; //42
+                    worksheet.Cells[row, col].Value = cv.Header.Amount; unclearedChecksTotal += cv.Header.Amount ?? 0m; //42
                 }
 
                 worksheet.Cells[row, 2].Style.Numberformat.Format = "dd-mmm-yyyy";
                 worksheet.Cells[row, 6].Style.Numberformat.Format = "dd-mmm-yyyy";
                 worksheet.Cells[row, 9].Style.Numberformat.Format = currencyFormat;
-                worksheet.Cells[row, 34, row, 42].Style.Numberformat.Format = currencyFormat;
+                worksheet.Cells[row, 12].Style.Numberformat.Format = currencyFormat;
+                worksheet.Cells[row, 15].Style.Numberformat.Format = currencyFormat;
+                worksheet.Cells[row, 27, row, 30].Style.Numberformat.Format = currencyFormat;
+                worksheet.Cells[row, 32, row, 42].Style.Numberformat.Format = currencyFormat;
 
                 row++;
             }
 
             #endregion == Values ==
+
+            #region == Summary ==
+
+            worksheet.Cells[row, 9].Value = vchAmountTotal;
+            worksheet.Cells[row, 12].Value = perCvEntryAmountTotal;
+            worksheet.Cells[row, 15].Value = perCvEntryInputVatAmountTotal;
+            worksheet.Cells[row, 27].Value = vatShouldBeTaxTotal;
+            worksheet.Cells[row, 28].Value = vatVarianceonTaxTotal;
+            worksheet.Cells[row, 34].Value = cost50Total;
+            worksheet.Cells[row, 35].Value = expenseDebitTotal;
+            worksheet.Cells[row, 36].Value = expenseCreditTotal;
+            worksheet.Cells[row, 37].Value = expenseCapexTotal;
+            worksheet.Cells[row, 38].Value = expenseVatTotal;
+            worksheet.Cells[row, 39].Value = expenseDVatTotal;
+            worksheet.Cells[row, 40].Value = expenseEwtTotal;
+            worksheet.Cells[row, 42].Value = unclearedChecksTotal;
+
+            mergedCells = worksheet.Cells[row, 9, row, 42];
+            mergedCells.Style.Numberformat.Format = currencyFormat;
+            mergedCells.Style.Font.Bold = true;
+            mergedCells.Style.Border.Top.Style = ExcelBorderStyle.Thin;
+            mergedCells.Style.Border.Bottom.Style = ExcelBorderStyle.Double;
+
+            #endregion == Summary
 
             #region == Cell sizes ==
 
