@@ -6,7 +6,7 @@ namespace TaxDeclaration.Services.Excel
 {
     public class IBSDisbursementExcelService
     {
-        public void ProcessReport1(ExcelWorksheet worksheet, 
+        public void ProcessHeaderReport(ExcelWorksheet worksheet, 
             GenerateTaxDeclarationViewModel viewModel, 
             List<CurcvheaderViewModel> curcvheader,
             List<CvEntriesViewModel> cventries)
@@ -328,7 +328,7 @@ namespace TaxDeclaration.Services.Excel
             #endregion == Cell sizes ==
         }
 
-        public void ProcessReport2(ExcelWorksheet worksheet, 
+        public void ProcessDetailReport(ExcelWorksheet worksheet, 
             GenerateTaxDeclarationViewModel viewModel, 
             List<CurcvheaderViewModel> curcvheader,
             List<CvEntriesViewModel> cventries,
@@ -588,6 +588,71 @@ namespace TaxDeclaration.Services.Excel
             }
 
             worksheet.Row(5).Height = 45;
+
+            #endregion == Cell sizes ==
+        }
+
+        public void ProcessTrialBalanceReport(ExcelWorksheet worksheet, GenerateTaxDeclarationViewModel viewModel)
+        {
+
+            #region == Title Area ==
+
+            var mergedCells = worksheet.Cells["A1:C1"];
+            mergedCells.Merge = true;
+            mergedCells.Value = $"IBS DISBURSEMENT VOUCHERS - {viewModel.SelectedCompany} - TRIAL BALANCE";
+            mergedCells.Style.Font.Size = 13;
+            mergedCells.Style.Font.Bold = true;
+
+            worksheet.Cells[1, 5].Value = $"Report generated: {DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}";
+
+            mergedCells = worksheet.Cells["A2:C2"];
+            mergedCells.Merge = true;
+            mergedCells.Value = $"Voucher's Check Date from {viewModel.DateFrom} to {viewModel.DateTo}";
+
+            mergedCells = worksheet.Cells["A3:C3"];
+            mergedCells.Merge = true;
+            mergedCells.Value = "Both Remitted and Unremitted";
+
+            #endregion == Title Area ==
+
+            var currencyFormat = "#,##0.00";
+
+            #region == Headers ==
+
+            var row = 4;
+            var col = 1;
+
+            var colSpanStart = col;
+            worksheet.Cells[row, col].Value = "ACCOUNT#"; worksheet.Cells[row, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
+            worksheet.Cells[row, col].Value = "ACCOUNT NAME"; worksheet.Cells[row, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
+            worksheet.Cells[row, col].Value = "DEBIT"; worksheet.Cells[row, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
+            worksheet.Cells[row, col].Value = "CREDIT"; worksheet.Cells[row, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
+            var colSpandEnd = col - 1;
+
+            worksheet.Cells[row, colSpanStart, row, colSpandEnd].Style.Fill.PatternType = ExcelFillStyle.Solid;
+            worksheet.Cells[row, colSpanStart, row, colSpandEnd].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.PeachPuff);
+
+            worksheet.Cells[row, 1, row + 1, 42].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            worksheet.Cells[row, 1, row + 1, 42].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+            worksheet.Cells[row, 1, row + 1, 42].Style.Font.Bold = true;
+
+            #endregion == Headers ==
+
+            #region == Values ==
+
+            row = 6;
+
+            #endregion == Values ==
+
+            #region == Cell sizes ==
+
+            worksheet.View.FreezePanes(5, 1);
+            worksheet.Columns.AutoFit();
+
+            for (int ctr = 1; ctr != 4; ctr++)
+            {
+                worksheet.Column(ctr).Width = 25;
+            }
 
             #endregion == Cell sizes ==
         }

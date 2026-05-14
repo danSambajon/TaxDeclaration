@@ -1491,13 +1491,22 @@ namespace TaxDeclaration.Controllers
 
                     using var package = new ExcelPackage();
 
-                    var report1 = package.Workbook.Worksheets.Add("Rpt#1");
-                    _excel.ProcessReport1(report1, viewModel, curcvheader, cventries);
+                    var reportClassifications = new List<string> { "ALL", "DOC", "UNDOC", "PUR-DOC", "PUR-UNDOC", "HAU-DOC", "HAU-UNDOC", "PAY-DOC", "PAY-UNDOC", "PENDING" };
 
-                    var report2 = package.Workbook.Worksheets.Add("Rpt#2");
-                    _excel.ProcessReport2(report2, viewModel, curcvheader, cventries, cvEntries2);
+                    foreach(var classification in reportClassifications)
+                    {
+                        if (classification == "ALL")
+                        {
+                            var report1 = package.Workbook.Worksheets.Add("Rpt#1");
+                            _excel.ProcessHeaderReport(report1, viewModel, curcvheader, cventries);
 
+                            var report2 = package.Workbook.Worksheets.Add("Rpt#2");
+                            _excel.ProcessDetailReport(report2, viewModel, curcvheader, cventries, cvEntries2);
 
+                            var tb1 = package.Workbook.Worksheets.Add("Tb#1");
+                            _excel.ProcessTrialBalanceReport(tb1, viewModel);
+                        }
+                    }
 
                     // var fileName = $"Purchase_Order_Report_{DateTimeHelper.GetCurrentPhilippineTime():yyyyddMMHHmmss}.xlsx";
                     var fileName = $"Tax_Report.xlsx";
