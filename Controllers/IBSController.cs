@@ -1493,7 +1493,7 @@ namespace TaxDeclaration.Controllers
 
                     var reportClassifications = new List<string> { "ALL", "DOC", "UNDOC", "PUR-DOC", "PUR-UNDOC", "HAU-DOC", "HAU-UNDOC", "PAY-DOC", "PAY-UNDOC", "PENDING" };
 
-                    foreach(var classification in reportClassifications)
+                    foreach (var classification in reportClassifications)
                     {
                         if (classification == "ALL")
                         {
@@ -1508,6 +1508,82 @@ namespace TaxDeclaration.Controllers
 
                             var gl1 = package.Workbook.Worksheets.Add("GL (#1)");
                             _excel.ProcessGeneralLedgerReport(gl1, viewModel);
+                        }
+                        else if (classification == "PENDING")
+                        {
+                            var headerReport = package.Workbook.Worksheets.Add(classification);
+                            headerReport.TabColor = System.Drawing.Color.Yellow;
+                            var curcvheaderchosen = curcvheader
+                                .Where(c => c.Header.BsNo == null || (!c.Header.BsNo.Contains("DOC") || !c.Header.BsNo.Contains("UNDOC")))
+                                .ToList();
+                            _excel.ProcessHeaderReport(headerReport, viewModel, curcvheaderchosen, cventries);
+                        }
+                        else
+                        {
+                            var curcvheaderchosen = new List<CurcvheaderViewModel>();
+
+                            var headerReport = package.Workbook.Worksheets.Add(classification);
+                            var detailReport = package.Workbook.Worksheets.Add($"{classification}-DTL");
+                            var trialBalanceReport = package.Workbook.Worksheets.Add($"{classification}-TB");
+                            var generalLedgerReport = package.Workbook.Worksheets.Add($"{classification}-GL");
+
+                            switch (classification)
+                            {
+                                case "DOC":
+                                    headerReport.TabColor = System.Drawing.Color.Yellow;
+                                    curcvheaderchosen = curcvheader.Where(c => c.Header.BsNo.Contains("DOC") && !c.Header.BsNo.Contains("UNDOC")
+                                        && !c.Header.BsNo.Contains("PUR") && !c.Header.BsNo.Contains("HAU")
+                                        && !c.Header.BsNo.Contains("PAY"))
+                                        .ToList();
+                                    break;
+                                case "UNDOC":
+                                    headerReport.TabColor = System.Drawing.Color.Green;
+                                    curcvheaderchosen = curcvheader.Where(c => c.Header.BsNo.Contains("UNDOC") && !c.Header.BsNo.Contains("PUR")
+                                        && !c.Header.BsNo.Contains("HAU") && !c.Header.BsNo.Contains("PAY"))
+                                        .ToList();
+                                    break;
+                                case "PUR-DOC":
+                                    headerReport.TabColor = System.Drawing.Color.Orange;
+                                    curcvheaderchosen = curcvheader.Where(c => c.Header.BsNo.Contains("DOC") && !c.Header.BsNo.Contains("UNDOC")
+                                        && c.Header.BsNo.Contains("PUR"))
+                                        .ToList();
+                                    break;
+                                case "PUR-UNDOC":
+                                    headerReport.TabColor = System.Drawing.Color.LightBlue;
+                                    curcvheaderchosen = curcvheader.Where(c => c.Header.BsNo.Contains("UNDOC") && c.Header.BsNo.Contains("PUR"))
+                                        .ToList();
+                                    break;
+                                case "HAU-DOC":
+                                    headerReport.TabColor = System.Drawing.Color.OrangeRed;
+                                    curcvheaderchosen = curcvheader.Where(c => c.Header.BsNo.Contains("DOC") && c.Header.BsNo.Contains("HAU")
+                                        && !c.Header.BsNo.Contains("UNDOC"))
+                                        .ToList();
+                                    break;
+                                case "HAU-UNDOC":
+                                    headerReport.TabColor = System.Drawing.Color.DarkBlue;
+                                    curcvheaderchosen = curcvheader.Where(c => c.Header.BsNo.Contains("UNDOC") && c.Header.BsNo.Contains("HAU"))
+                                        .ToList();
+                                    break;
+                                case "PAY-DOC":
+                                    headerReport.TabColor = System.Drawing.Color.PeachPuff;
+                                    curcvheaderchosen = curcvheader.Where(c => c.Header.BsNo.Contains("DOC") && c.Header.BsNo.Contains("PAY")
+                                        && !c.Header.BsNo.Contains("UNDOC"))
+                                        .ToList();
+                                    break;
+                                case "PAY-UNDOC":
+                                    headerReport.TabColor = System.Drawing.Color.PowderBlue;
+                                    curcvheaderchosen = curcvheader.Where(c => c.Header.BsNo.Contains("UNDOC") && c.Header.BsNo.Contains("PAY"))
+                                        .ToList();
+                                    break;
+                                default:
+                                    break;
+
+                            }
+
+                            _excel.ProcessHeaderReport(headerReport, viewModel, curcvheaderchosen, cventries);
+                            _excel.ProcessDetailReport(detailReport, viewModel, curcvheader, cventries, cvEntries2);
+                            _excel.ProcessTrialBalanceReport(trialBalanceReport, viewModel);
+                            _excel.ProcessGeneralLedgerReport(generalLedgerReport, viewModel);
                         }
                     }
 
