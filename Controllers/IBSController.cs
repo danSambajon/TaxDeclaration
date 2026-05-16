@@ -1512,7 +1512,7 @@ namespace TaxDeclaration.Controllers
                         else if (classification == "PENDING")
                         {
                             var headerReport = package.Workbook.Worksheets.Add(classification);
-                            headerReport.TabColor = System.Drawing.Color.Yellow;
+                            headerReport.TabColor = System.Drawing.Color.Red;
                             var curcvheaderchosen = curcvheader
                                 .Where(c => c.Header.BsNo == null || (!c.Header.BsNo.Contains("DOC") || !c.Header.BsNo.Contains("UNDOC")))
                                 .ToList();
@@ -1531,6 +1531,9 @@ namespace TaxDeclaration.Controllers
                             {
                                 case "DOC":
                                     headerReport.TabColor = System.Drawing.Color.Yellow;
+                                    detailReport.TabColor = System.Drawing.Color.Yellow;
+                                    trialBalanceReport.TabColor = System.Drawing.Color.Yellow;
+                                    generalLedgerReport.TabColor = System.Drawing.Color.Yellow;
                                     curcvheaderchosen = curcvheader.Where(c => c.Header.BsNo.Contains("DOC") && !c.Header.BsNo.Contains("UNDOC")
                                         && !c.Header.BsNo.Contains("PUR") && !c.Header.BsNo.Contains("HAU")
                                         && !c.Header.BsNo.Contains("PAY"))
@@ -1538,40 +1541,61 @@ namespace TaxDeclaration.Controllers
                                     break;
                                 case "UNDOC":
                                     headerReport.TabColor = System.Drawing.Color.Green;
+                                    detailReport.TabColor = System.Drawing.Color.Green;
+                                    trialBalanceReport.TabColor = System.Drawing.Color.Green;
+                                    generalLedgerReport.TabColor = System.Drawing.Color.Green;
                                     curcvheaderchosen = curcvheader.Where(c => c.Header.BsNo.Contains("UNDOC") && !c.Header.BsNo.Contains("PUR")
                                         && !c.Header.BsNo.Contains("HAU") && !c.Header.BsNo.Contains("PAY"))
                                         .ToList();
                                     break;
                                 case "PUR-DOC":
                                     headerReport.TabColor = System.Drawing.Color.Orange;
+                                    detailReport.TabColor = System.Drawing.Color.Orange;
+                                    trialBalanceReport.TabColor = System.Drawing.Color.Orange;
+                                    generalLedgerReport.TabColor = System.Drawing.Color.Orange;
                                     curcvheaderchosen = curcvheader.Where(c => c.Header.BsNo.Contains("DOC") && !c.Header.BsNo.Contains("UNDOC")
                                         && c.Header.BsNo.Contains("PUR"))
                                         .ToList();
                                     break;
                                 case "PUR-UNDOC":
                                     headerReport.TabColor = System.Drawing.Color.LightBlue;
+                                    detailReport.TabColor = System.Drawing.Color.LightBlue;
+                                    trialBalanceReport.TabColor = System.Drawing.Color.LightBlue;
+                                    generalLedgerReport.TabColor = System.Drawing.Color.LightBlue;
                                     curcvheaderchosen = curcvheader.Where(c => c.Header.BsNo.Contains("UNDOC") && c.Header.BsNo.Contains("PUR"))
                                         .ToList();
                                     break;
                                 case "HAU-DOC":
                                     headerReport.TabColor = System.Drawing.Color.OrangeRed;
+                                    detailReport.TabColor = System.Drawing.Color.OrangeRed;
+                                    trialBalanceReport.TabColor = System.Drawing.Color.OrangeRed;
+                                    generalLedgerReport.TabColor = System.Drawing.Color.OrangeRed;
                                     curcvheaderchosen = curcvheader.Where(c => c.Header.BsNo.Contains("DOC") && c.Header.BsNo.Contains("HAU")
                                         && !c.Header.BsNo.Contains("UNDOC"))
                                         .ToList();
                                     break;
                                 case "HAU-UNDOC":
                                     headerReport.TabColor = System.Drawing.Color.DarkBlue;
+                                    detailReport.TabColor = System.Drawing.Color.DarkBlue;
+                                    trialBalanceReport.TabColor = System.Drawing.Color.DarkBlue;
+                                    generalLedgerReport.TabColor = System.Drawing.Color.DarkBlue;
                                     curcvheaderchosen = curcvheader.Where(c => c.Header.BsNo.Contains("UNDOC") && c.Header.BsNo.Contains("HAU"))
                                         .ToList();
                                     break;
                                 case "PAY-DOC":
                                     headerReport.TabColor = System.Drawing.Color.PeachPuff;
+                                    detailReport.TabColor = System.Drawing.Color.PeachPuff;
+                                    trialBalanceReport.TabColor = System.Drawing.Color.PeachPuff;
+                                    generalLedgerReport.TabColor = System.Drawing.Color.PeachPuff;
                                     curcvheaderchosen = curcvheader.Where(c => c.Header.BsNo.Contains("DOC") && c.Header.BsNo.Contains("PAY")
                                         && !c.Header.BsNo.Contains("UNDOC"))
                                         .ToList();
                                     break;
                                 case "PAY-UNDOC":
                                     headerReport.TabColor = System.Drawing.Color.PowderBlue;
+                                    detailReport.TabColor = System.Drawing.Color.PowderBlue;
+                                    trialBalanceReport.TabColor = System.Drawing.Color.PowderBlue;
+                                    generalLedgerReport.TabColor = System.Drawing.Color.PowderBlue;
                                     curcvheaderchosen = curcvheader.Where(c => c.Header.BsNo.Contains("UNDOC") && c.Header.BsNo.Contains("PAY"))
                                         .ToList();
                                     break;
@@ -1581,7 +1605,7 @@ namespace TaxDeclaration.Controllers
                             }
 
                             _excel.ProcessHeaderReport(headerReport, viewModel, curcvheaderchosen, cventries);
-                            _excel.ProcessDetailReport(detailReport, viewModel, curcvheader, cventries, cvEntries2);
+                            _excel.ProcessDetailReport(detailReport, viewModel, curcvheaderchosen, cventries, cvEntries2);
                             _excel.ProcessTrialBalanceReport(trialBalanceReport, viewModel);
                             _excel.ProcessGeneralLedgerReport(generalLedgerReport, viewModel);
                         }
