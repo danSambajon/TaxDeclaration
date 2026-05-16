@@ -1514,7 +1514,7 @@ namespace TaxDeclaration.Controllers
                             var headerReport = package.Workbook.Worksheets.Add(classification);
                             headerReport.TabColor = System.Drawing.Color.Red;
                             var curcvheaderchosen = curcvheader
-                                .Where(c => c.Header.BsNo == null || (!c.Header.BsNo.Contains("DOC") || !c.Header.BsNo.Contains("UNDOC")))
+                                .Where(c => c.Header.BsNo == null || (!c.Header.BsNo.Contains("DOC") && !c.Header.BsNo.Contains("UNDOC")))
                                 .ToList();
                             _excel.ProcessHeaderReport(headerReport, viewModel, curcvheaderchosen, cventries);
                         }
