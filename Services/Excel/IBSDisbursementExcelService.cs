@@ -592,7 +592,9 @@ namespace TaxDeclaration.Services.Excel
             #endregion == Cell sizes ==
         }
 
-        public void ProcessTrialBalanceReport(ExcelWorksheet worksheet, GenerateTaxDeclarationViewModel viewModel)
+        public void ProcessTrialBalanceReport(ExcelWorksheet worksheet, 
+            GenerateTaxDeclarationViewModel viewModel,
+            List<CurtrialbalViewModel> trialBal)
         {
 
             #region == Title Area ==
@@ -615,7 +617,7 @@ namespace TaxDeclaration.Services.Excel
 
             #endregion == Title Area ==
 
-            var currencyFormat = "#,##0.00";
+            var currencyFormat = "#,##0.00;[Red](#,##0.00);??;@";
 
             #region == Headers ==
 
@@ -632,17 +634,55 @@ namespace TaxDeclaration.Services.Excel
             worksheet.Cells[row, colSpanStart, row, colSpandEnd].Style.Fill.PatternType = ExcelFillStyle.Solid;
             worksheet.Cells[row, colSpanStart, row, colSpandEnd].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.PeachPuff);
 
-            worksheet.Cells[row, 1, row + 1, 42].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-            worksheet.Cells[row, 1, row + 1, 42].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
-            worksheet.Cells[row, 1, row + 1, 42].Style.Font.Bold = true;
+            worksheet.Cells[row, 1, row, 42].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            worksheet.Cells[row, 1, row, 42].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+            worksheet.Cells[row, 1, row, 42].Style.Font.Bold = true;
 
             #endregion == Headers ==
 
             #region == Values ==
 
-            row = 6;
+            var debitTotal = 0m;
+            var creditTotal = 0m;
+
+            row = 5;
+
+            foreach (var tb in trialBal)
+            {
+                col = 1;
+
+                worksheet.Cells[row, col].Value = tb.Acctcd.Trim(); col++;
+                worksheet.Cells[row, col].Value = tb.AcctName.Trim(); col++;
+                worksheet.Cells[row, col].Value = tb.Bal > 0 ? tb.Bal : null; col++;
+                worksheet.Cells[row, col].Value = tb.Bal < 0 ? tb.Bal : null; col++;
+
+                if (tb.Bal > 0)
+                {
+                    debitTotal += tb.Bal ?? 0m;
+                }
+                if (tb.Bal < 0)
+                {
+                    creditTotal += tb.Bal ?? 0m;
+                }
+
+                worksheet.Cells[row, 3, row, 4].Style.Numberformat.Format = currencyFormat;
+
+                row++;
+            }
 
             #endregion == Values ==
+
+            #region == Summary ==
+
+            worksheet.Cells[row, 3].Value = debitTotal;
+            worksheet.Cells[row, 4].Value = creditTotal;
+
+            worksheet.Cells[row, 3, row, 4].Style.Numberformat.Format = currencyFormat;
+            worksheet.Cells[row, 3, row, 4].Style.Font.Bold = true;
+            worksheet.Cells[row, 3, row, 4].Style.Border.Top.Style = ExcelBorderStyle.Thin;
+            worksheet.Cells[row, 3, row, 4].Style.Border.Bottom.Style = ExcelBorderStyle.Double;
+
+            #endregion == Summary
 
             #region == Cell sizes ==
 

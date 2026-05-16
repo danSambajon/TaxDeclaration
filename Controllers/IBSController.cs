@@ -732,6 +732,8 @@ namespace TaxDeclaration.Controllers
                     .ThenBy(c => c.AcctName)
                     .ToList();
 
+                var breakpoint = 0m;
+
                 foreach (var trialBal in curtrialbaldoc)
                 {
                     trialBal.Bal = trialBal.Debit - trialBal.Credit;
@@ -1504,7 +1506,7 @@ namespace TaxDeclaration.Controllers
                             _excel.ProcessDetailReport(report2, viewModel, curcvheader, cventries, cvEntries2);
 
                             var tb1 = package.Workbook.Worksheets.Add("TB (#1)");
-                            _excel.ProcessTrialBalanceReport(tb1, viewModel);
+                            _excel.ProcessTrialBalanceReport(tb1, viewModel, curtrialbal);
 
                             var gl1 = package.Workbook.Worksheets.Add("GL (#1)");
                             _excel.ProcessGeneralLedgerReport(gl1, viewModel);
@@ -1521,6 +1523,7 @@ namespace TaxDeclaration.Controllers
                         else
                         {
                             var curcvheaderchosen = new List<CurcvheaderViewModel>();
+                            var curtrialbalchosen = new List<CurtrialbalViewModel>();
 
                             var headerReport = package.Workbook.Worksheets.Add(classification);
                             var detailReport = package.Workbook.Worksheets.Add($"{classification}-DTL");
@@ -1538,6 +1541,7 @@ namespace TaxDeclaration.Controllers
                                         && !c.Header.BsNo.Contains("PUR") && !c.Header.BsNo.Contains("HAU")
                                         && !c.Header.BsNo.Contains("PAY"))
                                         .ToList();
+                                    curtrialbalchosen = curtrialbaldoc;
                                     break;
                                 case "UNDOC":
                                     headerReport.TabColor = System.Drawing.Color.Green;
@@ -1547,6 +1551,7 @@ namespace TaxDeclaration.Controllers
                                     curcvheaderchosen = curcvheader.Where(c => c.Header.BsNo.Contains("UNDOC") && !c.Header.BsNo.Contains("PUR")
                                         && !c.Header.BsNo.Contains("HAU") && !c.Header.BsNo.Contains("PAY"))
                                         .ToList();
+                                    curtrialbalchosen = curtrialbalundoc;
                                     break;
                                 case "PUR-DOC":
                                     headerReport.TabColor = System.Drawing.Color.Orange;
@@ -1556,6 +1561,7 @@ namespace TaxDeclaration.Controllers
                                     curcvheaderchosen = curcvheader.Where(c => c.Header.BsNo.Contains("DOC") && !c.Header.BsNo.Contains("UNDOC")
                                         && c.Header.BsNo.Contains("PUR"))
                                         .ToList();
+                                    curtrialbalchosen = curtrialbalpurdoc;
                                     break;
                                 case "PUR-UNDOC":
                                     headerReport.TabColor = System.Drawing.Color.LightBlue;
@@ -1564,6 +1570,7 @@ namespace TaxDeclaration.Controllers
                                     generalLedgerReport.TabColor = System.Drawing.Color.LightBlue;
                                     curcvheaderchosen = curcvheader.Where(c => c.Header.BsNo.Contains("UNDOC") && c.Header.BsNo.Contains("PUR"))
                                         .ToList();
+                                    curtrialbalchosen = curtrialbalpurundoc;
                                     break;
                                 case "HAU-DOC":
                                     headerReport.TabColor = System.Drawing.Color.OrangeRed;
@@ -1573,6 +1580,7 @@ namespace TaxDeclaration.Controllers
                                     curcvheaderchosen = curcvheader.Where(c => c.Header.BsNo.Contains("DOC") && c.Header.BsNo.Contains("HAU")
                                         && !c.Header.BsNo.Contains("UNDOC"))
                                         .ToList();
+                                    curtrialbalchosen = curtrialbalhaudoc;
                                     break;
                                 case "HAU-UNDOC":
                                     headerReport.TabColor = System.Drawing.Color.DarkBlue;
@@ -1581,6 +1589,7 @@ namespace TaxDeclaration.Controllers
                                     generalLedgerReport.TabColor = System.Drawing.Color.DarkBlue;
                                     curcvheaderchosen = curcvheader.Where(c => c.Header.BsNo.Contains("UNDOC") && c.Header.BsNo.Contains("HAU"))
                                         .ToList();
+                                    curtrialbalchosen = curtrialbalhauundoc;
                                     break;
                                 case "PAY-DOC":
                                     headerReport.TabColor = System.Drawing.Color.PeachPuff;
@@ -1590,6 +1599,7 @@ namespace TaxDeclaration.Controllers
                                     curcvheaderchosen = curcvheader.Where(c => c.Header.BsNo.Contains("DOC") && c.Header.BsNo.Contains("PAY")
                                         && !c.Header.BsNo.Contains("UNDOC"))
                                         .ToList();
+                                    curtrialbalchosen = curtrialbalpaydoc;
                                     break;
                                 case "PAY-UNDOC":
                                     headerReport.TabColor = System.Drawing.Color.PowderBlue;
@@ -1598,6 +1608,7 @@ namespace TaxDeclaration.Controllers
                                     generalLedgerReport.TabColor = System.Drawing.Color.PowderBlue;
                                     curcvheaderchosen = curcvheader.Where(c => c.Header.BsNo.Contains("UNDOC") && c.Header.BsNo.Contains("PAY"))
                                         .ToList();
+                                    curtrialbalchosen = curtrialbalpayundoc;
                                     break;
                                 default:
                                     break;
@@ -1606,7 +1617,7 @@ namespace TaxDeclaration.Controllers
 
                             _excel.ProcessHeaderReport(headerReport, viewModel, curcvheaderchosen, cventries);
                             _excel.ProcessDetailReport(detailReport, viewModel, curcvheaderchosen, cventries, cvEntries2);
-                            _excel.ProcessTrialBalanceReport(trialBalanceReport, viewModel);
+                            _excel.ProcessTrialBalanceReport(trialBalanceReport, viewModel, curtrialbalchosen);
                             _excel.ProcessGeneralLedgerReport(generalLedgerReport, viewModel);
                         }
                     }
