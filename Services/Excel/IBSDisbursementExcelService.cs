@@ -1,4 +1,6 @@
-﻿using OfficeOpenXml;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
+using OfficeOpenXml;
 using OfficeOpenXml.Style;
 using System.Composition;
 using TaxDeclaration.Models.ViewModels;
@@ -838,6 +840,15 @@ namespace TaxDeclaration.Services.Excel
             var debitTotal = 0m;
             var creditTotal = 0m;
 
+            var cost50Total = 0m;
+            var expenseDebitTotal = 0m;
+            var expenseCreditTotal = 0m;
+            var expenseCapexTotal = 0m;
+            var expenseVatTotal = 0m;
+            var expenseDVatTotal = 0m;
+            var expenseEwtTotal = 0m;
+            var unclearedChecksTotal = 0m;
+
             row = 6;
 
             foreach (var cv in cventries2)
@@ -854,12 +865,65 @@ namespace TaxDeclaration.Services.Excel
                 worksheet.Cells[row, col].Value = cv.CvAmount; col++;
                 worksheet.Cells[row, col].Value = cv.DrCr ? "" : cv.Amount ?? 0m; col++;
                 worksheet.Cells[row, col].Value = cv.DrCr ? cv.Amount * -1 : ""; col++;
-                worksheet.Cells[row, col].Value = cv.Acctcd;
-                worksheet.Cells[row, col].Value = cv.AcctName;
+                worksheet.Cells[row, col].Value = cv.Acctcd; col++;
+                worksheet.Cells[row, col].Value = cv.AcctName; col++;
 
-                //worksheet.Cells[row, col].Value = tb.AcctName.Trim(); col++;
-                //worksheet.Cells[row, col].Value = tb.Bal > 0 ? tb.Bal : null; col++;
-                //worksheet.Cells[row, col].Value = tb.Bal < 0 ? tb.Bal : null; col++;
+                if (isGLAll)
+                {
+                    col = 22;
+
+                    var cost = 0m;
+                    var expDr = 0m;
+                    var expCr = 0m;
+                    var capex = 0m;
+                    var vat = 0m;
+                    var def = 0m;
+                    var ewt = 0m;
+
+                    if (cv.Acctcd.StartsWith("50"))
+                    {
+                        cost = cv.DrCr ? cv.Amount * -1 ?? 0m : cv.Amount ?? 0m;
+                        cost50Total += cost;
+                    }
+                    if (cv.Acctcd.StartsWith("55") || cv.Acctcd.StartsWith("65"))
+                    {
+                        expDr = cv.DrCr ? 0m : cv.Amount ?? 0m;
+                        expCr = cv.DrCr ? cv.Amount * -1 ?? 0m : 0m;
+
+                        expenseDebitTotal += expDr;
+                        expenseCreditTotal += expCr;
+                    }
+                    if (cv.Acctcd.StartsWith("102010"))
+                    {
+                        capex += cv.DrCr ? cv.Amount * -1 ?? 0m : cv.Amount ?? 0m;
+                        expenseCapexTotal += capex;
+                    }
+                    if (cv.Acctcd.StartsWith("101060200"))
+                    {
+                        vat += cv.DrCr ? cv.Amount * -1 ?? 0m : cv.Amount ?? 0m;
+                        expenseVatTotal += vat;
+                    }
+                    if (cv.Acctcd.StartsWith("101060300"))
+                    {
+                        def += cv.DrCr ? cv.Amount * -1 ?? 0m : cv.Amount ?? 0m;
+                        expenseDVatTotal += def;
+                    }
+                    if (cv.Acctcd.StartsWith("201030"))
+                    {
+                        ewt += cv.DrCr ? cv.Amount * -1 ?? 0m : cv.Amount ?? 0m;
+                        expenseEwtTotal += ewt;
+                    }
+
+                    worksheet.Cells[row, col].Value = cost; col++;
+                    worksheet.Cells[row, col].Value = expDr; col++;
+                    worksheet.Cells[row, col].Value = expCr; col++;
+                    worksheet.Cells[row, col].Value = capex; col++;
+                    worksheet.Cells[row, col].Value = vat; col++;
+                    worksheet.Cells[row, col].Value = def; col++;
+                    worksheet.Cells[row, col].Value = ewt; col += 2;
+
+                    worksheet.Cells[row, 22, row, 28].Style.Numberformat.Format = currencyFormat;
+                }
 
                 if (cv.DrCr)
                 {
@@ -888,6 +952,25 @@ namespace TaxDeclaration.Services.Excel
             worksheet.Cells[row, 9, row, 10].Style.Border.Bottom.Style = ExcelBorderStyle.Double;
 
             #endregion == Summary ==
+
+            #region == Summary ==
+
+            worksheet.Cells[row, 22].Value = cost50Total;
+            worksheet.Cells[row, 23].Value = expenseDebitTotal;
+            worksheet.Cells[row, 24].Value = expenseCreditTotal;
+            worksheet.Cells[row, 25].Value = expenseCapexTotal;
+            worksheet.Cells[row, 26].Value = expenseVatTotal;
+            worksheet.Cells[row, 27].Value = expenseDVatTotal;
+            worksheet.Cells[row, 28].Value = expenseEwtTotal;
+            worksheet.Cells[row, 29].Value = unclearedChecksTotal;
+
+            mergedCells = worksheet.Cells[row, 9, row, 42];
+            mergedCells.Style.Numberformat.Format = currencyFormat;
+            mergedCells.Style.Font.Bold = true;
+            mergedCells.Style.Border.Top.Style = ExcelBorderStyle.Thin;
+            mergedCells.Style.Border.Bottom.Style = ExcelBorderStyle.Double;
+
+            #endregion == Summary
 
             #region == Cell sizes ==
 
