@@ -777,22 +777,6 @@ namespace TaxDeclaration.Services.Excel
             if (isGLAll)
             {
                 colSpanStart = col;
-                mergedCells = worksheet.Cells[row, col, row, col + 5]; mergedCells.Merge = true; mergedCells.Value = "TAX BASE PER CV ENTRY"; mergedCells.Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black);
-                mergedCells.Style.Fill.PatternType = ExcelFillStyle.Solid; mergedCells.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.GreenYellow);
-                worksheet.Cells[row + 1, col].Value = "AMOUNT"; worksheet.Cells[row + 1, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
-                worksheet.Cells[row + 1, col].Value = "ACCT#"; worksheet.Cells[row + 1, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
-                worksheet.Cells[row + 1, col].Value = "ACCTNAME"; worksheet.Cells[row + 1, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
-                worksheet.Cells[row + 1, col].Value = "INPUT VAT AMT"; worksheet.Cells[row + 1, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
-                worksheet.Cells[row + 1, col].Value = "ACCT#"; worksheet.Cells[row + 1, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
-                worksheet.Cells[row + 1, col].Value = "ACCTNAME"; worksheet.Cells[row + 1, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col = col + 2;
-                colSpandEnd = col - 2;
-
-                worksheet.Cells[row + 1, colSpanStart, row + 1, colSpandEnd].Style.Fill.PatternType = ExcelFillStyle.Solid;
-                worksheet.Cells[row + 1, colSpanStart, row + 1, colSpandEnd].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
-
-
-
-                colSpanStart = col;
                 mergedCells = worksheet.Cells[row, col, row, col + 6]; mergedCells.Merge = true; mergedCells.Value = "FROM 2307 SYSTEM"; mergedCells.Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black);
                 mergedCells.Style.Fill.PatternType = ExcelFillStyle.Solid; mergedCells.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightBlue);
                 worksheet.Cells[row + 1, col].Value = "PAYOR"; worksheet.Cells[row + 1, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
@@ -836,9 +820,9 @@ namespace TaxDeclaration.Services.Excel
                 worksheet.Cells[row, colSpanStart, row + 1, colSpandEnd].Style.Fill.PatternType = ExcelFillStyle.Solid;
                 worksheet.Cells[row, colSpanStart, row + 1, colSpandEnd].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
 
-                worksheet.Cells[row, 1, row + 1, 35].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-                worksheet.Cells[row, 1, row + 1, 35].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
-                worksheet.Cells[row, 1, row + 1, 35].Style.Font.Bold = true;
+                worksheet.Cells[row, 1, row + 1, 28].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                worksheet.Cells[row, 1, row + 1, 28].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+                worksheet.Cells[row, 1, row + 1, 28].Style.Font.Bold = true;
             }
             else
             {
@@ -910,7 +894,7 @@ namespace TaxDeclaration.Services.Excel
             worksheet.View.FreezePanes(6, 1);
             worksheet.Columns.AutoFit();
 
-            for (int ctr = 1; ctr != 35; ctr++)
+            for (int ctr = 1; ctr != 28; ctr++)
             {
                 if(worksheet.Column(ctr).Width < 15)
                 {
