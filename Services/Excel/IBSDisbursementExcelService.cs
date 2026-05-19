@@ -1,5 +1,6 @@
 ﻿using OfficeOpenXml;
 using OfficeOpenXml.Style;
+using System.Composition;
 using TaxDeclaration.Models.ViewModels;
 
 namespace TaxDeclaration.Services.Excel
@@ -9,7 +10,8 @@ namespace TaxDeclaration.Services.Excel
         public void ProcessHeaderReport(ExcelWorksheet worksheet, 
             GenerateTaxDeclarationViewModel viewModel, 
             List<CurcvheaderViewModel> curcvheader,
-            List<CvEntriesViewModel> cventries)
+            List<CvEntriesViewModel> cventries,
+            bool isReport3)
         {
 
             #region == Title Area ==
@@ -155,13 +157,15 @@ namespace TaxDeclaration.Services.Excel
             worksheet.Cells[row, colSpanStart, row + 1, colSpandEnd].Style.Fill.PatternType = ExcelFillStyle.Solid;
             worksheet.Cells[row, colSpanStart, row + 1, colSpandEnd].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
 
+            if (isReport3 == false)
+            {
+                colSpanStart = col;
+                mergedCells = worksheet.Cells[row, col, row + 1, col]; mergedCells.Merge = true; mergedCells.Value = "UNCLEARED CHECKS"; mergedCells.Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
+                colSpandEnd = col - 1;
 
-            colSpanStart = col;
-            mergedCells = worksheet.Cells[row, col, row + 1, col]; mergedCells.Merge = true; mergedCells.Value = "UNCLEARED CHECKS"; mergedCells.Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
-            colSpandEnd = col - 1;
-
-            worksheet.Cells[row, colSpanStart, row + 1, colSpandEnd].Style.Fill.PatternType = ExcelFillStyle.Solid;
-            worksheet.Cells[row, colSpanStart, row + 1, colSpandEnd].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightBlue);
+                worksheet.Cells[row, colSpanStart, row + 1, colSpandEnd].Style.Fill.PatternType = ExcelFillStyle.Solid;
+                worksheet.Cells[row, colSpanStart, row + 1, colSpandEnd].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightBlue);
+            }
 
             worksheet.Cells[row, 1, row + 1, 42].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
             worksheet.Cells[row, 1, row + 1, 42].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
@@ -315,7 +319,14 @@ namespace TaxDeclaration.Services.Excel
 
             for (int ctr = 1; ctr != 45; ctr++)
             {
-                worksheet.Column(ctr).Width = 25;
+                if (worksheet.Column(ctr).Width < 15)
+                {
+                    worksheet.Column(ctr).Width = 15;
+                }
+                if (worksheet.Column(ctr).Width > 60)
+                {
+                    worksheet.Column(ctr).Width = 60;
+                }
             }
 
             foreach (var colTemp in new List<int> { 11, 18, 26, 29, 33, 41 })
@@ -579,7 +590,14 @@ namespace TaxDeclaration.Services.Excel
 
             for (int ctr = 1; ctr != 39; ctr++)
             {
-                worksheet.Column(ctr).Width = 25;
+                if (worksheet.Column(ctr).Width < 15)
+                {
+                    worksheet.Column(ctr).Width = 15;
+                }
+                if (worksheet.Column(ctr).Width > 60)
+                {
+                    worksheet.Column(ctr).Width = 60;
+                }
             }
 
             foreach (var colTemp in new List<int> { 11, 18, 26, 29, 33, 38 })
@@ -651,8 +669,8 @@ namespace TaxDeclaration.Services.Excel
             {
                 col = 1;
 
-                worksheet.Cells[row, col].Value = tb.Acctcd.Trim(); col++;
-                worksheet.Cells[row, col].Value = tb.AcctName.Trim(); col++;
+                worksheet.Cells[row, col].Value = tb.Acctcd?.Trim(); col++;
+                worksheet.Cells[row, col].Value = tb.AcctName?.Trim(); col++;
                 worksheet.Cells[row, col].Value = tb.Bal > 0 ? tb.Bal : null; col++;
                 worksheet.Cells[row, col].Value = tb.Bal < 0 ? tb.Bal : null; col++;
 
@@ -691,13 +709,23 @@ namespace TaxDeclaration.Services.Excel
 
             for (int ctr = 1; ctr != 4; ctr++)
             {
-                worksheet.Column(ctr).Width = 25;
+                if (worksheet.Column(ctr).Width < 15)
+                {
+                    worksheet.Column(ctr).Width = 15;
+                }
+                if (worksheet.Column(ctr).Width > 60)
+                {
+                    worksheet.Column(ctr).Width = 60;
+                }
             }
+
 
             #endregion == Cell sizes ==
         }
 
-        public void ProcessGeneralLedgerReport(ExcelWorksheet worksheet, GenerateTaxDeclarationViewModel viewModel)
+        public void ProcessGeneralLedgerReport(ExcelWorksheet worksheet, 
+            GenerateTaxDeclarationViewModel viewModel, 
+            List<CvEntriesViewModel> cventries2)
         {
 
             #region == Title Area ==
@@ -720,7 +748,7 @@ namespace TaxDeclaration.Services.Excel
 
             #endregion == Title Area ==
 
-            var currencyFormat = "#,##0.00";
+            var currencyFormat = "#,##0.00;[Red](#,##0.00);??;@";
 
             #region == Headers ==
 
@@ -751,20 +779,79 @@ namespace TaxDeclaration.Services.Excel
 
             #endregion == Headers ==
 
+
+
             #region == Values ==
 
-            row = 6;
+            var debitTotal = 0m;
+            var creditTotal = 0m;
+
+            row = 5;
+
+            foreach (var cv in cventries2)
+            {
+                col = 1;
+
+                worksheet.Cells[row, col].Value = cv.CvNo; col++;
+                worksheet.Cells[row, col].Value = cv.TranDate; col++;
+                worksheet.Cells[row, col].Value = cv.Payee; col++;
+                worksheet.Cells[row, col].Value = cv.Particulars; col++;
+                worksheet.Cells[row, col].Value = cv.CheckNo; col++;
+                worksheet.Cells[row, col].Value = cv.CheckDate; col++;
+                worksheet.Cells[row, col].Value = cv.BsNo; col++;
+                worksheet.Cells[row, col].Value = cv.CvAmount; col++;
+                worksheet.Cells[row, col].Value = cv.DrCr ? "" : cv.Amount ?? 0m; col++;
+                worksheet.Cells[row, col].Value = cv.DrCr ? cv.Amount * -1 : ""; col++;
+                worksheet.Cells[row, col].Value = cv.Acctcd;
+                worksheet.Cells[row, col].Value = cv.AcctName;
+
+                //worksheet.Cells[row, col].Value = tb.AcctName.Trim(); col++;
+                //worksheet.Cells[row, col].Value = tb.Bal > 0 ? tb.Bal : null; col++;
+                //worksheet.Cells[row, col].Value = tb.Bal < 0 ? tb.Bal : null; col++;
+
+                if (cv.DrCr)
+                {
+                    creditTotal += (cv.Amount ?? 0m) * -1;
+                }
+                else
+                {
+                    debitTotal += cv.Amount ?? 0m;
+                }
+
+                worksheet.Cells[row, 9, row, 10].Style.Numberformat.Format = currencyFormat;
+
+                row++;
+            }
 
             #endregion == Values ==
+
+            #region == Summary ==
+
+            worksheet.Cells[row, 9].Value = debitTotal;
+            worksheet.Cells[row, 10].Value = creditTotal;
+
+            worksheet.Cells[row, 9, row, 10].Style.Numberformat.Format = currencyFormat;
+            worksheet.Cells[row, 9, row, 10].Style.Font.Bold = true;
+            worksheet.Cells[row, 9, row, 10].Style.Border.Top.Style = ExcelBorderStyle.Thin;
+            worksheet.Cells[row, 9, row, 10].Style.Border.Bottom.Style = ExcelBorderStyle.Double;
+
+            #endregion == Summary ==
 
             #region == Cell sizes ==
 
             worksheet.View.FreezePanes(5, 1);
             worksheet.Columns.AutoFit();
 
-            for (int ctr = 1; ctr != 4; ctr++)
+            for (int ctr = 1; ctr != 12; ctr++)
             {
-                worksheet.Column(ctr).Width = 25;
+                if(worksheet.Column(ctr).Width < 15)
+                {
+                    worksheet.Column(ctr).Width = 15;
+                }
+                if(worksheet.Column(ctr).Width > 60)
+                {
+                    worksheet.Column(ctr).Width = 60;
+                }
             }
 
             #endregion == Cell sizes ==

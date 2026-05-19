@@ -194,7 +194,7 @@ namespace TaxDeclaration.Controllers
                     })
                     .Where(d => d.Header.TranDate >= viewModel.DateFrom && d.Header.TranDate <= viewModel.DateTo)
                     .OrderBy(d => d.Header.TranDate)
-                    .ThenBy(d => d.CvDtl)
+                    .ThenBy(d => d.Header.CvNo)
                     .ToList();
 
                 // Verified
@@ -402,8 +402,7 @@ namespace TaxDeclaration.Controllers
                     }
 
                     var cvEntry = cventries
-                        .Where(c => c.CvNo.Trim() == cv3.Header.CvNo.Trim()
-                        && c.Acctcd.Trim() == "101060200")
+                        .Where(c => c.CvNo.Trim() == cv3.Header.CvNo.Trim() && c.Acctcd.Trim() == "101060200")
                         .FirstOrDefault();
 
                     // VAT
@@ -465,8 +464,8 @@ namespace TaxDeclaration.Controllers
 
                         var cvEntriesTemp = cvEntries2
                             .Where(c => c.CvNo.Trim() == cv3.Header.CvNo.Trim()
-                            && (acctList.Contains(c.Acctcd.Trim()) || c.Acctcd.Trim().StartsWith("201030")))
-                            .ToList();
+                            && (acctList.Contains(c.Acctcd.Trim()) || c.Acctcd.Trim().StartsWith("201030")) 
+                            && !c.Acctcd.Trim().StartsWith("V00")).ToList();
 
                         if (cvEntriesTemp != null)
                         {
@@ -475,7 +474,7 @@ namespace TaxDeclaration.Controllers
                                 amt = amt + (cvEntryTemp.DrCr ? (cvEntryTemp.Amount * -1) : cvEntryTemp.Amount) ?? 0m;
                                 ctr = ctr + 1;
 
-                                if (acct == string.Empty)
+                                if (string.IsNullOrEmpty(acct))
                                 {
                                     acct = cvEntryTemp.Acctcd;
                                     name = cvEntryTemp.AcctName;
@@ -523,8 +522,8 @@ namespace TaxDeclaration.Controllers
 
                         var cvEntriesTemp = cvEntries2
                             .Where(c => c.CvNo.Trim() == cv3.Header.CvNo.Trim()
-                            && (acctList.Contains(c.Acctcd.Trim()) || c.Acctcd.Trim().StartsWith("201030")))
-                            .ToList();
+                            && (acctList.Contains(c.Acctcd.Trim()) || c.Acctcd.Trim().StartsWith("201030"))
+                            && !c.Acctcd.Trim().StartsWith("V00")).ToList();
 
                         if (cvEntriesTemp != null)
                         {
@@ -533,7 +532,7 @@ namespace TaxDeclaration.Controllers
                                 amt = amt + (cvEntryTemp.DrCr ? 0 : cvEntryTemp.Amount) ?? 0m;
                                 ctr = ctr + 1;
 
-                                if (acct == string.Empty)
+                                if (string.IsNullOrEmpty(acct))
                                 {
                                     acct = cvEntryTemp.Acctcd;
                                     name = cvEntryTemp.AcctName;
@@ -581,8 +580,8 @@ namespace TaxDeclaration.Controllers
 
                         var cvEntriesTemp = cvEntries2
                             .Where(c => c.CvNo.Trim() == cv3.Header.CvNo.Trim()
-                            && (acctList.Contains(c.Acctcd.Trim()) || c.Acctcd.Trim().StartsWith("201030")))
-                            .ToList();
+                            && (acctList.Contains(c.Acctcd.Trim()) || c.Acctcd.Trim().StartsWith("201030"))
+                            && !c.Acctcd.Trim().StartsWith("V00")).ToList();
 
                         if (cvEntriesTemp != null)
                         {
@@ -639,7 +638,8 @@ namespace TaxDeclaration.Controllers
 
                         var cvEntriesTemp = cvEntries2
                             .Where(c => c.CvNo.Trim() == cv3.Header.CvNo.Trim()
-                            && (acctList.Contains(c.Acctcd.Trim()) || c.Acctcd.Trim().StartsWith("201030")))
+                            && (acctList.Contains(c.Acctcd.Trim()) || c.Acctcd.Trim().StartsWith("201030"))
+                            && !c.Acctcd.Trim().StartsWith("V00"))
                             .ToList();
 
                         if (cvEntriesTemp != null)
@@ -649,7 +649,7 @@ namespace TaxDeclaration.Controllers
                                 amt = amt + (cvEntryTemp.DrCr ? 0 : cvEntryTemp.Amount) ?? 0m;
                                 ctr = ctr + 1;
 
-                                if (acct == string.Empty)
+                                if (string.IsNullOrEmpty(acct))
                                 {
                                     acct = cvEntryTemp.Acctcd;
                                     name = cvEntryTemp.AcctName;
@@ -955,9 +955,12 @@ namespace TaxDeclaration.Controllers
                         Company = d.Company == null ? (string)null : d.Company.Co
                     })
                     .Where(d => d.Header.TranDate >= viewModel.DateFrom && d.Header.TranDate <= viewModel.DateTo)
+                    .OrderBy(d => d.Header.TranDate)
+                    .ThenBy(d => d.Header.CvNo)
                     .ToList();
 
                 var cvDetailGroupAll = cvDetailx
+                    .Where(d => tempall.Contains(d.CvNo))
                     .GroupBy(d => new
                     {
                         d.CvNo,
@@ -978,11 +981,13 @@ namespace TaxDeclaration.Controllers
                     .ToList();
 
                 var cvDetailGroup2All = cvDetailx
+                    .Where(d => tempall.Contains(d.CvNo))
                     .Select(d => new
                     {
                         d.CvNo,
                         d.DrCr,
                         d.Acctcd,
+                        AcctName = chartOfAccounts.Where(coa => coa.AccountNumber == d.Acctcd).FirstOrDefault().AccountName,
                         d.Amount,
                         d.SeqId,
                         d.IsDisplayEntry
@@ -991,19 +996,20 @@ namespace TaxDeclaration.Controllers
                     .ThenBy(d => d.SeqId)
                     .ToList();
 
-                var detail_accountsall = cvDetailGroup
+                var detail_accountsall = cvDetailGroupAll
+                    .GroupBy(d => new { d.DrCr, d.Acctcd })
                     .Select(d => new DetailAccountsViewModel
                     {
-                        DrCr = d.DrCr,
-                        Acctcd = d.Acctcd,
-                        AcctName = chartOfAccounts.Where(coa => coa.AccountNumber == d.Acctcd).FirstOrDefault().AccountName,
-                        ColNum = (decimal)0
+                        DrCr = d.Key.DrCr,
+                        Acctcd = d.Key.Acctcd,
+                        AcctName = chartOfAccounts
+                            .FirstOrDefault(coa => coa.AccountNumber.Trim() == d.Key.Acctcd.Trim())?.AccountName,
+                        ColNum = 0
                     })
-                    .Distinct()
                     .OrderBy(d => d.Acctcd)
                     .ToList();
 
-                var acctgroupall = detail_accounts
+                var acctgroupall = detail_accountsall
                     .GroupBy(d => new
                     {
                         d.DrCr,
@@ -1013,13 +1019,15 @@ namespace TaxDeclaration.Controllers
                     {
                         Drcr = d.Key.DrCr,
                         Acc = d.Key.Acctcd,
-                        Ctr = d.Count()
+                        Ctr = d.Count(),
+                        ColNum = 0
                     })
                     .OrderBy(d => d.Acc)
                     .ToList();
 
-                var cventriesall = (from d in curcvheader
-                                    join h in cvDetailGroup on d.Header.CvNo equals h.CvNo
+                var cventriesall = (from d in curcvheaderall
+                                    from h in cvDetailGroupAll
+                                    where d.Header.CvNo.Trim() == h.CvNo.Trim() || d.Header.Reference?.Trim() == h.CvNo.Trim()
                                     join a in detail_accountsall
                                         on new { AcctCd = h.Acctcd.Trim(), DrCr = h.DrCr }
                                         equals new { AcctCd = a.Acctcd.Trim(), DrCr = a.DrCr }
@@ -1027,24 +1035,24 @@ namespace TaxDeclaration.Controllers
                                     from c in leftJoin.DefaultIfEmpty()
                                     select new CvEntriesViewModel
                                     {
-                                        CvNo = d.Header.CvNo,
-                                        TranDate = d.Header.TranDate,
-                                        Payee = d.Header.Payee,
-                                        BankCode = d.Header.BankCode,
-                                        BankName = d.Header.BankName,
-                                        CvAmount = d.Header.Amount,
-                                        CheckNo = d.Header.CheckNo,
-                                        CheckDate = d.Header.CheckDate,
-                                        BsNo = d.Header.BsNo,
-                                        ChkClear = d.Header.ChkClear,
-                                        Particulars = d.Header.Particulars,
+                                        CvNo = d.Header?.CvNo,
+                                        TranDate = d.Header?.TranDate,
+                                        Payee = d.Header?.Payee,
+                                        BankCode = d.Header?.BankCode,
+                                        BankName = d.Header?.BankName,
+                                        CvAmount = d.Header?.Amount,
+                                        CheckNo = d.Header?.CheckNo,
+                                        CheckDate = d.Header?.CheckDate,
+                                        BsNo = d.Header?.BsNo,
+                                        ChkClear = d.Header?.ChkClear,
+                                        Particulars = d.Header?.Particulars,
                                         Amount = h.Amount,
                                         DrCr = h.DrCr,
                                         Acctcd = h.Acctcd,
-                                        AcctName = c.AcctName,
-                                        ColNum = c.ColNum,
-                                        Reference = d.Header.Reference,
-                                        CvType = d.Header.CvType
+                                        AcctName = c?.AcctName ?? "",
+                                        ColNum = c?.ColNum ?? 0,
+                                        Reference = d.Header?.Reference,
+                                        CvType = d.Header?.CvType
                                     })
                     .OrderBy(h => h.CvNo)
                     .ThenBy(h => h.Acctcd)
@@ -1053,7 +1061,7 @@ namespace TaxDeclaration.Controllers
                 // Verified
                 var cvEntries2all = (from a in curcvheaderall
                                      from b in cvDetailGroup2All
-                                     where a.Header.CvNo == b.CvNo || a.Header.Reference == b.CvNo
+                                     where a.Header.CvNo?.Trim() == b.CvNo.Trim() || a.Header.Reference?.Trim() == b.CvNo.Trim()
                                      join c in detail_accountsall
                                          on new { AcctCd = b.Acctcd.Trim(), DrCr = b.DrCr }
                                          equals new { AcctCd = c.Acctcd.Trim(), DrCr = c.DrCr }
@@ -1075,8 +1083,8 @@ namespace TaxDeclaration.Controllers
                                          Amount = b.Amount,
                                          DrCr = b.DrCr,
                                          Acctcd = b.Acctcd,
-                                         AcctName = c != null ? c.AcctName : null,
-                                         ColNum = c != null ? c.ColNum : 0,
+                                         AcctName = c?.AcctName ?? "",
+                                         ColNum = c != null ? c?.ColNum : 0,
                                          Reference = a.Header.Reference,
                                          Seqid = b.SeqId,
                                          CvType = a.Header.CvType,
@@ -1104,7 +1112,7 @@ namespace TaxDeclaration.Controllers
                         cv.StnCode = dcrEntry.StnCode;
                         if (dcrEntry.AccountNo != cv.Header.BankCode)
                         {
-                            cv.Rem = "DIFFERENT BANK CODE";
+                            cv.Rem = "DIFFERENT BANK ACCOUNT";
                         }
                     }
                     else
@@ -1140,17 +1148,18 @@ namespace TaxDeclaration.Controllers
 
                 #region == EWT and VAT to cvall ==
 
-                foreach (var cv in curcvheaderall)
+                foreach (var cvhall in curcvheaderall)
                 {
                     var vat = 0m;
 
-                    if ((cv.Amt2307 != 0) && (cv.Percent != 0))
+                    if ((cvhall.Amt2307 != 0) && (cvhall.Percent != 0))
                     {
-                        cv.EwtShouldBe = cv.Amt2307 / (cv.Percent / 100);
+                        cvhall.EwtShouldBe = cvhall.Amt2307 / (cvhall.Percent / 100);
                     }
 
+                    // FIX 1: Removed impossible dual-value condition on Acctcd
                     var cvEntry = cventriesall
-                        .Where(c => c.CvNo == cv.Header.CvNo && c.Acctcd.Trim() == "101060200" && c.Acctcd.Trim() == "V00-17-101")
+                        .Where(c => c.CvNo.Trim() == cvhall.Header.CvNo.Trim() && c.Acctcd.Trim() == "101060200")
                         .FirstOrDefault();
 
                     // VAT
@@ -1158,27 +1167,46 @@ namespace TaxDeclaration.Controllers
                     {
                         vat = (cvEntry.Amount ?? 0m) / 0.12m;
 
-                        cv.EwtAmt = cvEntry.Amount ?? 0m;
-                        cv.EwtAcctNo = cvEntry.Acctcd;
-                        cv.EwtDesc = cvEntry.AcctName;
-                        cv.EwtOk = true;
-                        cv.VatShouldBe = vat;
+                        cvhall.EwtAmt = cvEntry.Amount ?? 0m;
+                        cvhall.EwtAcctNo = cvEntry.Acctcd;
+                        cvhall.EwtDesc = cvEntry.AcctName;
+                        cvhall.EwtOk = true;
+                        cvhall.VatShouldBe = vat;
 
                         var cvEntry2 = cventriesall
-                                .Where(c => c.CvNo.Trim() == cv.Header.CvNo.Trim() && c.Amount >= vat - 1 && c.Amount <= vat + 1)
-                                .FirstOrDefault();
+                            .Where(c => c.CvNo.Trim() == cvhall.Header.CvNo.Trim() && c.Amount >= vat - 1 && c.Amount <= vat + 1)
+                            .FirstOrDefault();
 
                         if (cvEntry2 != null)
                         {
-                            cv.VatAmt = cvEntry2.Amount ?? 0m;
-                            cv.VatAcctNo = cvEntry2.Acctcd;
-                            cv.VatDesc = cvEntry2.AcctName;
-                            cv.VatOk = true;
+                            cvhall.VatAmt = cvEntry2.Amount ?? 0m;
+                            cvhall.VatAcctNo = cvEntry2.Acctcd;
+                            cvhall.VatDesc = cvEntry2.AcctName;
+                            cvhall.VatOk = true;
+                        }
+                    }
+                    else
+                    {
+                        // FIX 2: Added missing ELSE branch from FoxPro - fallback EWT amount-range lookup
+                        if (cvhall.EwtShouldBe != 0)
+                        {
+                            var nEwt = cvhall.EwtShouldBe;
+                            var cvEntryElse = cventriesall
+                                .Where(c => c.CvNo.Trim() == cvhall.Header.CvNo.Trim() && c.Amount >= nEwt - 1 && c.Amount <= nEwt + 1)
+                                .FirstOrDefault();
+
+                            if (cvEntryElse != null)
+                            {
+                                cvhall.VatAmt = cvEntryElse.Amount ?? 0m;
+                                cvhall.VatAcctNo = cvEntryElse.Acctcd;
+                                cvhall.VatDesc = cvEntryElse.AcctName;
+                                cvhall.VatOk = true;
+                            }
                         }
                     }
 
-                    // credit included (1) ewt
-                    if (cv.VatAmt == 0)
+                    // FIX 3 label: ewt_shldbe match - credit included (drCr flipped to negative)
+                    if (cvhall.VatAmt == 0)
                     {
                         var amt = 0m;
                         var ctr = 0m;
@@ -1188,7 +1216,7 @@ namespace TaxDeclaration.Controllers
                         var acctList = new[] { "101060200", "101060300", "101010100" };
 
                         var cvEntriesTemp = cvEntries2all
-                            .Where(c => c.CvNo == cv.Header.CvNo
+                            .Where(c => c.CvNo.Trim() == cvhall.Header.CvNo.Trim()
                             && (acctList.Contains(c.Acctcd.Trim()) || c.Acctcd.Trim().StartsWith("201030"))
                             && !c.Acctcd.Trim().StartsWith("V00")).ToList();
 
@@ -1199,7 +1227,8 @@ namespace TaxDeclaration.Controllers
                                 amt = amt + (cvEntryTemp.DrCr ? (cvEntryTemp.Amount * -1) : cvEntryTemp.Amount) ?? 0m;
                                 ctr = ctr + 1;
 
-                                if (acct == string.Empty || acct == null)
+                                // FIX 4: Use IsNullOrEmpty consistently
+                                if (string.IsNullOrEmpty(acct))
                                 {
                                     acct = cvEntryTemp.Acctcd;
                                     name = cvEntryTemp.AcctName;
@@ -1212,27 +1241,27 @@ namespace TaxDeclaration.Controllers
                             }
                         }
 
-                        if (cv.EwtShouldBe >= amt - 5 && cv.EwtShouldBe <= amt + 5)
+                        if (cvhall.EwtShouldBe >= amt - 5 && cvhall.EwtShouldBe <= amt + 5)
                         {
                             if (acct == "SUM OF ")
                             {
-                                cv.VatAmt = amt;
-                                cv.VatAcctNo = "MULTIPLE";
-                                cv.VatDesc = $"SUM OF {ctr.ToString()} ENTRIES";
-                                cv.VatOk = true;
+                                cvhall.VatAmt = amt;
+                                cvhall.VatAcctNo = "MULTIPLE";
+                                cvhall.VatDesc = $"SUM OF {ctr.ToString()} ENTRIES";
+                                cvhall.VatOk = true;
                             }
                             else
                             {
-                                cv.VatAmt = amt;
-                                cv.VatAcctNo = acct;
-                                cv.VatDesc = name;
-                                cv.VatOk = true;
+                                cvhall.VatAmt = amt;
+                                cvhall.VatAcctNo = acct;
+                                cvhall.VatDesc = name;
+                                cvhall.VatOk = true;
                             }
                         }
                     }
 
-                    // credit excluded (1) ewt
-                    if (cv.VatAmt == 0)
+                    // FIX 3 label: ewt_shldbe match - credit excluded (drCr entries skipped)
+                    if (cvhall.VatAmt == 0)
                     {
                         var amt = 0m;
                         var ctr = 0m;
@@ -1242,7 +1271,7 @@ namespace TaxDeclaration.Controllers
                         var acctList = new[] { "101060200", "101060300", "101010100" };
 
                         var cvEntriesTemp = cvEntries2all
-                            .Where(c => c.CvNo == cv.Header.CvNo
+                            .Where(c => c.CvNo.Trim() == cvhall.Header.CvNo.Trim()
                             && (acctList.Contains(c.Acctcd.Trim()) || c.Acctcd.Trim().StartsWith("201030"))
                             && !c.Acctcd.Trim().StartsWith("V00")).ToList();
 
@@ -1253,7 +1282,8 @@ namespace TaxDeclaration.Controllers
                                 amt = amt + (cvEntryTemp.DrCr ? 0 : cvEntryTemp.Amount) ?? 0m;
                                 ctr = ctr + 1;
 
-                                if (acct == string.Empty)
+                                // FIX 4: Use IsNullOrEmpty consistently
+                                if (string.IsNullOrEmpty(acct))
                                 {
                                     acct = cvEntryTemp.Acctcd;
                                     name = cvEntryTemp.AcctName;
@@ -1266,27 +1296,27 @@ namespace TaxDeclaration.Controllers
                             }
                         }
 
-                        if (cv.EwtShouldBe >= amt - 5 && cv.EwtShouldBe <= amt + 5)
+                        if (cvhall.EwtShouldBe >= amt - 5 && cvhall.EwtShouldBe <= amt + 5)
                         {
                             if (acct == "SUM OF ")
                             {
-                                cv.VatAmt = amt;
-                                cv.VatAcctNo = "MULTIPLE";
-                                cv.VatDesc = $"SUM OF {ctr.ToString()} ENTRIES";
-                                cv.VatOk = true;
+                                cvhall.VatAmt = amt;
+                                cvhall.VatAcctNo = "MULTIPLE";
+                                cvhall.VatDesc = $"SUM OF {ctr.ToString()} ENTRIES";
+                                cvhall.VatOk = true;
                             }
                             else
                             {
-                                cv.VatAmt = amt;
-                                cv.VatAcctNo = acct;
-                                cv.VatDesc = name;
-                                cv.VatOk = true;
+                                cvhall.VatAmt = amt;
+                                cvhall.VatAcctNo = acct;
+                                cvhall.VatDesc = name;
+                                cvhall.VatOk = true;
                             }
                         }
                     }
 
-                    // credit included (2) vat
-                    if (cv.VatAmt == 0)
+                    // FIX 3 label: vat_shldbe match - credit included (drCr flipped to negative)
+                    if (cvhall.VatAmt == 0)
                     {
                         var amt = 0m;
                         var ctr = 0m;
@@ -1296,7 +1326,7 @@ namespace TaxDeclaration.Controllers
                         var acctList = new[] { "101060200", "101060300", "101010100" };
 
                         var cvEntriesTemp = cvEntries2all
-                            .Where(c => c.CvNo == cv.Header.CvNo
+                            .Where(c => c.CvNo.Trim() == cvhall.Header.CvNo.Trim()
                             && (acctList.Contains(c.Acctcd.Trim()) || c.Acctcd.Trim().StartsWith("201030"))
                             && !c.Acctcd.Trim().StartsWith("V00")).ToList();
 
@@ -1307,7 +1337,8 @@ namespace TaxDeclaration.Controllers
                                 amt = amt + (cvEntryTemp.DrCr ? cvEntryTemp.Amount * -1 : cvEntryTemp.Amount) ?? 0m;
                                 ctr = ctr + 1;
 
-                                if (acct == string.Empty)
+                                // FIX 4: Use IsNullOrEmpty consistently
+                                if (string.IsNullOrEmpty(acct))
                                 {
                                     acct = cvEntryTemp.Acctcd;
                                     name = cvEntryTemp.AcctName;
@@ -1320,27 +1351,27 @@ namespace TaxDeclaration.Controllers
                             }
                         }
 
-                        if (cv.VatShouldBe >= amt - 5 && cv.VatShouldBe <= amt + 5)
+                        if (cvhall.VatShouldBe >= amt - 5 && cvhall.VatShouldBe <= amt + 5)
                         {
                             if (acct == "SUM OF ")
                             {
-                                cv.VatAmt = amt;
-                                cv.VatAcctNo = "MULTIPLE";
-                                cv.VatDesc = $"SUM OF {ctr.ToString()} ENTRIES";
-                                cv.VatOk = true;
+                                cvhall.VatAmt = amt;
+                                cvhall.VatAcctNo = "MULTIPLE";
+                                cvhall.VatDesc = $"SUM OF {ctr.ToString()} ENTRIES";
+                                cvhall.VatOk = true;
                             }
                             else
                             {
-                                cv.VatAmt = amt;
-                                cv.VatAcctNo = acct;
-                                cv.VatDesc = name;
-                                cv.VatOk = true;
+                                cvhall.VatAmt = amt;
+                                cvhall.VatAcctNo = acct;
+                                cvhall.VatDesc = name;
+                                cvhall.VatOk = true;
                             }
                         }
                     }
 
-                    // credit excluded (2) vat
-                    if (cv.VatAmt == 0)
+                    // FIX 3 label: vat_shldbe match - credit excluded (drCr entries skipped)
+                    if (cvhall.VatAmt == 0)
                     {
                         var amt = 0m;
                         var ctr = 0m;
@@ -1350,7 +1381,7 @@ namespace TaxDeclaration.Controllers
                         var acctList = new[] { "101060200", "101060300", "101010100" };
 
                         var cvEntriesTemp = cvEntries2all
-                            .Where(c => c.CvNo == cv.Header.CvNo
+                            .Where(c => c.CvNo.Trim() == cvhall.Header.CvNo.Trim()
                             && (acctList.Contains(c.Acctcd.Trim()) || c.Acctcd.Trim().StartsWith("201030"))
                             && !c.Acctcd.Trim().StartsWith("V00")).ToList();
 
@@ -1361,7 +1392,8 @@ namespace TaxDeclaration.Controllers
                                 amt = amt + (cvEntryTemp.DrCr ? 0 : cvEntryTemp.Amount) ?? 0m;
                                 ctr = ctr + 1;
 
-                                if (acct == string.Empty)
+                                // FIX 4: Use IsNullOrEmpty consistently
+                                if (string.IsNullOrEmpty(acct))
                                 {
                                     acct = cvEntryTemp.Acctcd;
                                     name = cvEntryTemp.AcctName;
@@ -1374,21 +1406,21 @@ namespace TaxDeclaration.Controllers
                             }
                         }
 
-                        if (cv.VatShouldBe >= amt - 5 && cv.VatShouldBe <= amt + 5)
+                        if (cvhall.VatShouldBe >= amt - 5 && cvhall.VatShouldBe <= amt + 5)
                         {
                             if (acct == "SUM OF ")
                             {
-                                cv.VatAmt = amt;
-                                cv.VatAcctNo = "MULTIPLE";
-                                cv.VatDesc = $"SUM OF {ctr.ToString()} ENTRIES";
-                                cv.VatOk = true;
+                                cvhall.VatAmt = amt;
+                                cvhall.VatAcctNo = "MULTIPLE";
+                                cvhall.VatDesc = $"SUM OF {ctr.ToString()} ENTRIES";
+                                cvhall.VatOk = true;
                             }
                             else
                             {
-                                cv.VatAmt = amt;
-                                cv.VatAcctNo = acct;
-                                cv.VatDesc = name;
-                                cv.VatOk = true;
+                                cvhall.VatAmt = amt;
+                                cvhall.VatAcctNo = acct;
+                                cvhall.VatDesc = name;
+                                cvhall.VatOk = true;
                             }
                         }
                     }
@@ -1500,7 +1532,7 @@ namespace TaxDeclaration.Controllers
                         if (classification == "ALL")
                         {
                             var report1 = package.Workbook.Worksheets.Add("RPT#1");
-                            _excel.ProcessHeaderReport(report1, viewModel, curcvheader, cventries);
+                            _excel.ProcessHeaderReport(report1, viewModel, curcvheader, cventries, false);
 
                             var report2 = package.Workbook.Worksheets.Add("RPT#2");
                             _excel.ProcessDetailReport(report2, viewModel, curcvheader, cventries, cvEntries2);
@@ -1509,7 +1541,18 @@ namespace TaxDeclaration.Controllers
                             _excel.ProcessTrialBalanceReport(tb1, viewModel, curtrialbal);
 
                             var gl1 = package.Workbook.Worksheets.Add("GL (#1)");
-                            _excel.ProcessGeneralLedgerReport(gl1, viewModel);
+                            _excel.ProcessGeneralLedgerReport(gl1, viewModel, cvEntries2);
+
+                            var report3 = package.Workbook.Worksheets.Add("RPT#3 (ALL CVs)");
+                            report3.TabColor = System.Drawing.Color.Green;
+                            _excel.ProcessHeaderReport(report3, viewModel, curcvheaderall, cventriesall, true);
+
+                            var tball = package.Workbook.Worksheets.Add("TB (ALL)");
+                            _excel.ProcessTrialBalanceReport(tball, viewModel, curtrialbal2all);
+
+                            var glall = package.Workbook.Worksheets.Add("GL (ALL)");
+                            glall.TabColor = System.Drawing.Color.Green;
+                            _excel.ProcessGeneralLedgerReport(glall, viewModel, cvEntries2all);
                         }
                         else if (classification == "PENDING")
                         {
@@ -1518,7 +1561,7 @@ namespace TaxDeclaration.Controllers
                             var curcvheaderchosen = curcvheader
                                 .Where(c => c.Header.BsNo == null || (!c.Header.BsNo.Contains("DOC") && !c.Header.BsNo.Contains("UNDOC")))
                                 .ToList();
-                            _excel.ProcessHeaderReport(headerReport, viewModel, curcvheaderchosen, cventries);
+                            _excel.ProcessHeaderReport(headerReport, viewModel, curcvheaderchosen, cventries, false);
                         }
                         else
                         {
@@ -1615,10 +1658,10 @@ namespace TaxDeclaration.Controllers
 
                             }
 
-                            _excel.ProcessHeaderReport(headerReport, viewModel, curcvheaderchosen, cventries);
+                            _excel.ProcessHeaderReport(headerReport, viewModel, curcvheaderchosen, cventries, false);
                             _excel.ProcessDetailReport(detailReport, viewModel, curcvheaderchosen, cventries, cvEntries2);
                             _excel.ProcessTrialBalanceReport(trialBalanceReport, viewModel, curtrialbalchosen);
-                            _excel.ProcessGeneralLedgerReport(generalLedgerReport, viewModel);
+                            _excel.ProcessGeneralLedgerReport(generalLedgerReport, viewModel, cvEntries2.OrderBy(cv => cv.Acctcd).ToList());
                         }
                     }
 
