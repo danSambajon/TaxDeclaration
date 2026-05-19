@@ -272,7 +272,7 @@ namespace TaxDeclaration.Services.Excel
                 worksheet.Cells[row, col].Value = def; col++; expenseDVatTotal += def; //39
                 worksheet.Cells[row, col].Value = ewt; col += 2; expenseEwtTotal += ewt; //40
 
-                if(cv.DCRDate == null || cv.DCRDate > cv.DateTo)
+                if((cv.DCRDate == null || cv.DCRDate > cv.DateTo) && !isReport3)
                 {
                     worksheet.Cells[row, col].Value = cv.Header.Amount; unclearedChecksTotal += cv.Header.Amount ?? 0m; //42
                 }
