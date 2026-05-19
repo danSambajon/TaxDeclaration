@@ -1541,7 +1541,7 @@ namespace TaxDeclaration.Controllers
                             _excel.ProcessTrialBalanceReport(tb1, viewModel, curtrialbal);
 
                             var gl1 = package.Workbook.Worksheets.Add("GL (#1)");
-                            _excel.ProcessGeneralLedgerReport(gl1, viewModel, cvEntries2);
+                            _excel.ProcessGeneralLedgerReport(gl1, viewModel, cvEntries2, false);
 
                             var report3 = package.Workbook.Worksheets.Add("RPT#3 (ALL CVs)");
                             report3.TabColor = System.Drawing.Color.Green;
@@ -1552,7 +1552,7 @@ namespace TaxDeclaration.Controllers
 
                             var glall = package.Workbook.Worksheets.Add("GL (ALL)");
                             glall.TabColor = System.Drawing.Color.Green;
-                            _excel.ProcessGeneralLedgerReport(glall, viewModel, cvEntries2all);
+                            _excel.ProcessGeneralLedgerReport(glall, viewModel, cvEntries2all, true);
                         }
                         else if (classification == "PENDING")
                         {
@@ -1661,7 +1661,7 @@ namespace TaxDeclaration.Controllers
                             _excel.ProcessHeaderReport(headerReport, viewModel, curcvheaderchosen, cventries, false);
                             _excel.ProcessDetailReport(detailReport, viewModel, curcvheaderchosen, cventries, cvEntries2);
                             _excel.ProcessTrialBalanceReport(trialBalanceReport, viewModel, curtrialbalchosen);
-                            _excel.ProcessGeneralLedgerReport(generalLedgerReport, viewModel, cvEntries2.OrderBy(cv => cv.Acctcd).ToList());
+                            _excel.ProcessGeneralLedgerReport(generalLedgerReport, viewModel, cvEntries2.OrderBy(cv => cv.Acctcd).ToList(), false);
                         }
                     }
 

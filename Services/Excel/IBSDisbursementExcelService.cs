@@ -723,9 +723,10 @@ namespace TaxDeclaration.Services.Excel
             #endregion == Cell sizes ==
         }
 
-        public void ProcessGeneralLedgerReport(ExcelWorksheet worksheet, 
-            GenerateTaxDeclarationViewModel viewModel, 
-            List<CvEntriesViewModel> cventries2)
+        public void ProcessGeneralLedgerReport(ExcelWorksheet worksheet,
+            GenerateTaxDeclarationViewModel viewModel,
+            List<CvEntriesViewModel> cventries2,
+            bool isGLAll)
         {
 
             #region == Title Area ==
@@ -756,37 +757,104 @@ namespace TaxDeclaration.Services.Excel
             var col = 1;
 
             var colSpanStart = col;
-            worksheet.Cells[row, col].Value = "VOUCHER#"; worksheet.Cells[row, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
-            worksheet.Cells[row, col].Value = "VOUCHER DATE"; worksheet.Cells[row, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
-            worksheet.Cells[row, col].Value = "PAYEE"; worksheet.Cells[row, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
-            worksheet.Cells[row, col].Value = "PARTICULAR"; worksheet.Cells[row, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
-            worksheet.Cells[row, col].Value = "CHECK#"; worksheet.Cells[row, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
-            worksheet.Cells[row, col].Value = "CHECK DATE"; worksheet.Cells[row, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
-            worksheet.Cells[row, col].Value = "OTHERS"; worksheet.Cells[row, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
-            worksheet.Cells[row, col].Value = "VCH AMOUNT"; worksheet.Cells[row, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
-            worksheet.Cells[row, col].Value = "DEBIT"; worksheet.Cells[row, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
-            worksheet.Cells[row, col].Value = "CREDIT"; worksheet.Cells[row, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
-            worksheet.Cells[row, col].Value = "ACCOUNT#"; worksheet.Cells[row, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
-            worksheet.Cells[row, col].Value = "ACCOUNT NAME"; worksheet.Cells[row, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
-            var colSpandEnd = col - 1;
+            worksheet.Cells[row + 1, col].Value = "VOUCHER#"; worksheet.Cells[row + 1, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
+            worksheet.Cells[row + 1, col].Value = "VOUCHER DATE"; worksheet.Cells[row + 1, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
+            worksheet.Cells[row + 1, col].Value = "PAYEE"; worksheet.Cells[row + 1, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
+            worksheet.Cells[row + 1, col].Value = "PARTICULAR"; worksheet.Cells[row + 1, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
+            worksheet.Cells[row + 1, col].Value = "CHECK#"; worksheet.Cells[row + 1, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
+            worksheet.Cells[row + 1, col].Value = "CHECK DATE"; worksheet.Cells[row + 1, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
+            worksheet.Cells[row + 1, col].Value = "OTHERS"; worksheet.Cells[row + 1, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
+            worksheet.Cells[row + 1, col].Value = "VCH AMOUNT"; worksheet.Cells[row + 1, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
+            worksheet.Cells[row + 1, col].Value = "DEBIT"; worksheet.Cells[row + 1, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
+            worksheet.Cells[row + 1, col].Value = "CREDIT"; worksheet.Cells[row + 1, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
+            worksheet.Cells[row + 1, col].Value = "ACCOUNT#"; worksheet.Cells[row + 1, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
+            worksheet.Cells[row + 1, col].Value = "ACCOUNT NAME"; worksheet.Cells[row + 1, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col += 2;
+            var colSpandEnd = col - 2;
 
-            worksheet.Cells[row, colSpanStart, row, colSpandEnd].Style.Fill.PatternType = ExcelFillStyle.Solid;
-            worksheet.Cells[row, colSpanStart, row, colSpandEnd].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.PeachPuff);
+            worksheet.Cells[row + 1, colSpanStart, row + 1, colSpandEnd].Style.Fill.PatternType = ExcelFillStyle.Solid;
+            worksheet.Cells[row + 1, colSpanStart, row + 1, colSpandEnd].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.PeachPuff);
 
-            worksheet.Cells[row, 1, row, 12].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-            worksheet.Cells[row, 1, row, 12].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
-            worksheet.Cells[row, 1, row, 12].Style.Font.Bold = true;
+            if (isGLAll)
+            {
+                colSpanStart = col;
+                mergedCells = worksheet.Cells[row, col, row, col + 5]; mergedCells.Merge = true; mergedCells.Value = "TAX BASE PER CV ENTRY"; mergedCells.Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black);
+                mergedCells.Style.Fill.PatternType = ExcelFillStyle.Solid; mergedCells.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.GreenYellow);
+                worksheet.Cells[row + 1, col].Value = "AMOUNT"; worksheet.Cells[row + 1, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
+                worksheet.Cells[row + 1, col].Value = "ACCT#"; worksheet.Cells[row + 1, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
+                worksheet.Cells[row + 1, col].Value = "ACCTNAME"; worksheet.Cells[row + 1, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
+                worksheet.Cells[row + 1, col].Value = "INPUT VAT AMT"; worksheet.Cells[row + 1, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
+                worksheet.Cells[row + 1, col].Value = "ACCT#"; worksheet.Cells[row + 1, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
+                worksheet.Cells[row + 1, col].Value = "ACCTNAME"; worksheet.Cells[row + 1, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col = col + 2;
+                colSpandEnd = col - 2;
+
+                worksheet.Cells[row + 1, colSpanStart, row + 1, colSpandEnd].Style.Fill.PatternType = ExcelFillStyle.Solid;
+                worksheet.Cells[row + 1, colSpanStart, row + 1, colSpandEnd].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+
+
+
+                colSpanStart = col;
+                mergedCells = worksheet.Cells[row, col, row, col + 6]; mergedCells.Merge = true; mergedCells.Value = "FROM 2307 SYSTEM"; mergedCells.Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black);
+                mergedCells.Style.Fill.PatternType = ExcelFillStyle.Solid; mergedCells.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightBlue);
+                worksheet.Cells[row + 1, col].Value = "PAYOR"; worksheet.Cells[row + 1, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
+                worksheet.Cells[row + 1, col].Value = "PAYEE"; worksheet.Cells[row + 1, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
+                worksheet.Cells[row + 1, col].Value = "TIN"; worksheet.Cells[row + 1, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
+                worksheet.Cells[row + 1, col].Value = "PERCENT"; worksheet.Cells[row + 1, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
+                worksheet.Cells[row + 1, col].Value = "EWT AMOUNT"; worksheet.Cells[row + 1, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
+                worksheet.Cells[row + 1, col].Value = "MONTH"; worksheet.Cells[row + 1, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
+                worksheet.Cells[row + 1, col].Value = "YEAR"; worksheet.Cells[row + 1, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col = col + 2;
+                colSpandEnd = col - 2;
+
+                worksheet.Cells[row + 1, colSpanStart, row + 1, colSpandEnd].Style.Fill.PatternType = ExcelFillStyle.Solid;
+                worksheet.Cells[row + 1, colSpanStart, row + 1, colSpandEnd].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightBlue);
+
+                colSpanStart = col;
+                mergedCells = worksheet.Cells[row, col, row + 1, col]; mergedCells.Merge = true; mergedCells.Value = "COST (50)"; mergedCells.Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
+                colSpandEnd = col - 1;
+
+                worksheet.Cells[row, colSpanStart, row + 1, colSpandEnd].Style.Fill.PatternType = ExcelFillStyle.Solid;
+                worksheet.Cells[row, colSpanStart, row + 1, colSpandEnd].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+
+
+                colSpanStart = col;
+                mergedCells = worksheet.Cells[row, col, row, col + 1]; mergedCells.Merge = true; mergedCells.Value = "EXPENSE (55/65)"; mergedCells.Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black);
+                mergedCells.Style.Fill.PatternType = ExcelFillStyle.Solid; mergedCells.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+                worksheet.Cells[row + 1, col].Value = "DEBIT"; worksheet.Cells[row + 1, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
+                worksheet.Cells[row + 1, col].Value = "CREDIT"; worksheet.Cells[row + 1, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
+                colSpandEnd = col - 1;
+
+                worksheet.Cells[row, colSpanStart, row + 1, colSpandEnd].Style.Fill.PatternType = ExcelFillStyle.Solid;
+                worksheet.Cells[row, colSpanStart, row + 1, colSpandEnd].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+
+
+                colSpanStart = col;
+                mergedCells = worksheet.Cells[row, col, row + 1, col]; mergedCells.Merge = true; mergedCells.Value = "CAPEX (102010)"; mergedCells.Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
+                mergedCells = worksheet.Cells[row, col, row + 1, col]; mergedCells.Merge = true; mergedCells.Value = "VAT (101060200)"; mergedCells.Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
+                mergedCells = worksheet.Cells[row, col, row + 1, col]; mergedCells.Merge = true; mergedCells.Value = "DEFERRED VAT (101060300)"; mergedCells.Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
+                mergedCells = worksheet.Cells[row, col, row + 1, col]; mergedCells.Merge = true; mergedCells.Value = "EWT"; mergedCells.Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col = col + 2;
+                colSpandEnd = col - 2;
+
+                worksheet.Cells[row, colSpanStart, row + 1, colSpandEnd].Style.Fill.PatternType = ExcelFillStyle.Solid;
+                worksheet.Cells[row, colSpanStart, row + 1, colSpandEnd].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+
+                worksheet.Cells[row, 1, row + 1, 35].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                worksheet.Cells[row, 1, row + 1, 35].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+                worksheet.Cells[row, 1, row + 1, 35].Style.Font.Bold = true;
+            }
+            else
+            {
+                worksheet.Cells[row, 1, row + 1, 12].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                worksheet.Cells[row, 1, row + 1, 12].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+                worksheet.Cells[row, 1, row + 1, 12].Style.Font.Bold = true;
+            }
 
             #endregion == Headers ==
-
-
 
             #region == Values ==
 
             var debitTotal = 0m;
             var creditTotal = 0m;
 
-            row = 5;
+            row = 6;
 
             foreach (var cv in cventries2)
             {
@@ -839,10 +907,10 @@ namespace TaxDeclaration.Services.Excel
 
             #region == Cell sizes ==
 
-            worksheet.View.FreezePanes(5, 1);
+            worksheet.View.FreezePanes(6, 1);
             worksheet.Columns.AutoFit();
 
-            for (int ctr = 1; ctr != 12; ctr++)
+            for (int ctr = 1; ctr != 35; ctr++)
             {
                 if(worksheet.Column(ctr).Width < 15)
                 {
