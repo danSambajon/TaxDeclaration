@@ -798,7 +798,7 @@ namespace TaxDeclaration.Services.Excel
                 colSpandEnd = col - 1;
 
                 worksheet.Cells[row, colSpanStart, row + 1, colSpandEnd].Style.Fill.PatternType = ExcelFillStyle.Solid;
-                worksheet.Cells[row, colSpanStart, row + 1, colSpandEnd].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+                worksheet.Cells[row, colSpanStart, row + 1, colSpandEnd].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.PeachPuff);
 
 
                 colSpanStart = col;
@@ -809,7 +809,7 @@ namespace TaxDeclaration.Services.Excel
                 colSpandEnd = col - 1;
 
                 worksheet.Cells[row, colSpanStart, row + 1, colSpandEnd].Style.Fill.PatternType = ExcelFillStyle.Solid;
-                worksheet.Cells[row, colSpanStart, row + 1, colSpandEnd].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+                worksheet.Cells[row, colSpanStart, row + 1, colSpandEnd].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.PeachPuff);
 
 
                 colSpanStart = col;
@@ -820,11 +820,22 @@ namespace TaxDeclaration.Services.Excel
                 colSpandEnd = col - 2;
 
                 worksheet.Cells[row, colSpanStart, row + 1, colSpandEnd].Style.Fill.PatternType = ExcelFillStyle.Solid;
-                worksheet.Cells[row, colSpanStart, row + 1, colSpandEnd].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+                worksheet.Cells[row, colSpanStart, row + 1, colSpandEnd].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.PeachPuff); 
+                
+                colSpanStart = col;
+                mergedCells = worksheet.Cells[row, col, row, col + 2]; mergedCells.Merge = true; mergedCells.Value = "FROM DCR"; mergedCells.Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black);
+                mergedCells.Style.Fill.PatternType = ExcelFillStyle.Solid; mergedCells.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.GreenYellow);
+                worksheet.Cells[row + 1, col].Value = "ACCOUNT NUMBER"; worksheet.Cells[row + 1, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
+                worksheet.Cells[row + 1, col].Value = "CASHPO DATE"; worksheet.Cells[row + 1, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
+                worksheet.Cells[row + 1, col].Value = "DCR DATE"; worksheet.Cells[row + 1, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black); col++;
+                colSpandEnd = col - 1;
 
-                worksheet.Cells[row, 1, row + 1, 28].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-                worksheet.Cells[row, 1, row + 1, 28].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
-                worksheet.Cells[row, 1, row + 1, 28].Style.Font.Bold = true;
+                worksheet.Cells[row , colSpanStart, row + 1, colSpandEnd].Style.Fill.PatternType = ExcelFillStyle.Solid;
+                worksheet.Cells[row, colSpanStart, row + 1, colSpandEnd].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.Yellow);
+
+                worksheet.Cells[row, 1, row + 1, 32].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                worksheet.Cells[row, 1, row + 1, 32].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+                worksheet.Cells[row, 1, row + 1, 32].Style.Font.Bold = true;
             }
             else
             {
@@ -921,8 +932,12 @@ namespace TaxDeclaration.Services.Excel
                     worksheet.Cells[row, col].Value = vat; col++;
                     worksheet.Cells[row, col].Value = def; col++;
                     worksheet.Cells[row, col].Value = ewt; col += 2;
+                    worksheet.Cells[row, col].Value = cv.AccountNo; col++;
+                    worksheet.Cells[row, col].Value = cv.CashpoDate; col++;
+                    worksheet.Cells[row, col].Value = cv.DcrDate; col++;
 
                     worksheet.Cells[row, 22, row, 28].Style.Numberformat.Format = currencyFormat;
+                    worksheet.Cells[row, 31, row, 32].Style.Numberformat.Format = "dd-mmm-yyyy";
                 }
 
                 if (cv.DrCr)
@@ -934,7 +949,8 @@ namespace TaxDeclaration.Services.Excel
                     debitTotal += cv.Amount ?? 0m;
                 }
 
-                worksheet.Cells[row, 9, row, 10].Style.Numberformat.Format = currencyFormat;
+                worksheet.Cells[row, 2].Style.Numberformat.Format = "dd-mmm-yyyy";
+                worksheet.Cells[row, 8, row, 10].Style.Numberformat.Format = currencyFormat;
 
                 row++;
             }
