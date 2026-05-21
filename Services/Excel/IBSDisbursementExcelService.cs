@@ -182,6 +182,7 @@ namespace TaxDeclaration.Services.Excel
             var perCvEntryInputVatAmountTotal = 0m;
             var vatShouldBeTaxTotal = 0m;
             var vatVarianceonTaxTotal = 0m;
+            var whtShouldBeTaxTotal = 0m;
             var whtVarianceonTaxTotal = 0m;
             var cost50Total = 0m;
             var expenseDebitTotal = 0m;
@@ -219,7 +220,11 @@ namespace TaxDeclaration.Services.Excel
 
                 col = 27;
                 worksheet.Cells[row, col].Value = cv.VatShouldBe; col++; vatShouldBeTaxTotal += cv.VatShouldBe; //27
-                worksheet.Cells[row, col].Value = cv.VatAmt - cv.VatShouldBe; col++; vatVarianceonTaxTotal += (cv.VatAmt - cv.VatShouldBe); //28
+                worksheet.Cells[row, col].Value = cv.VatAmt - cv.VatShouldBe; col += 2; vatVarianceonTaxTotal += (cv.VatAmt - cv.VatShouldBe); //28
+
+                worksheet.Cells[row, col].Value = cv.Percent != 0 ? cv.Amt2307/cv.Percent : string.Empty; col++; whtShouldBeTaxTotal += cv.Percent != 0 ? (cv.Amt2307 / cv.Percent) : 0; // 30
+                worksheet.Cells[row, col].Value = cv.Percent != 0 ? cv.Percent : string.Empty; col++; ; // 31
+                worksheet.Cells[row, col].Value = cv.Percent != 0 ? (cv.VatAmt - (cv.Amt2307 / cv.Percent)) : cv.VatAmt; col++; whtVarianceonTaxTotal += cv.Percent != 0 ? (cv.VatAmt - (cv.Amt2307 / cv.Percent)) : cv.VatAmt; // 32
 
                 col = 34; // 29
 
