@@ -170,7 +170,15 @@ namespace TaxDeclaration.Services.Dbf
                 {
                     var rawCashPoDate = dbf["CASHPODATE"]?.ToString()?.Trim();
                     var cashpoDate = DateTime.TryParseExact(rawCashPoDate,
-                        new[] { "d MMM yyyy hh:mm:ss tt", "MM/dd/yyyy", "M dd yyyy" },
+                        new[] {
+                            "M/d/yyyy h:mm:ss tt",
+                            "M/dd/yyyy h:mm:ss tt",
+                            "MM/d/yyyy h:mm:ss tt",
+                            "MM/dd/yyyy h:mm:ss tt",
+                            "MM/dd/yyyy",
+                            "M dd yyyy",
+                            "dd MMM yyyy h:mm:ss tt"
+                        },
                         CultureInfo.InvariantCulture,
                         DateTimeStyles.None,
                         out var cashpoDateParsed)
@@ -179,7 +187,15 @@ namespace TaxDeclaration.Services.Dbf
 
                     var rawDcrDate = dbf["DCRDATE"]?.ToString()?.Trim();
                     var dcrDate = DateTime.TryParseExact(rawDcrDate,
-                        new[] { "d MMM yyyy hh:mm:ss tt", "MM/dd/yyyy", "M dd yyyy" },
+                        new[] {
+                            "M/d/yyyy h:mm:ss tt",
+                            "M/dd/yyyy h:mm:ss tt",
+                            "MM/d/yyyy h:mm:ss tt",
+                            "MM/dd/yyyy h:mm:ss tt",
+                            "MM/dd/yyyy",
+                            "M dd yyyy",
+                            "dd MMM yyyy h:mm:ss tt"
+                        },
                         CultureInfo.InvariantCulture,
                         DateTimeStyles.None,
                         out var dcrDateParsed)
