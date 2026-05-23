@@ -16,6 +16,11 @@ namespace TaxDeclaration.Services.Excel
             bool isReport3)
         {
 
+            if (isReport3)
+            {
+                var cvInQuestion = curcvheader.Where(cv => cv.Header.CvNo == "CVN000002528").FirstOrDefault();
+            }
+
             #region == Title Area ==
 
             var mergedCells = worksheet.Cells["A1:C1"];

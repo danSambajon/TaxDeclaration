@@ -153,6 +153,7 @@ namespace TaxDeclaration.Controllers
                         Header = d.Header
                     })
                     .ToList();
+                // || referenceFromcvheaderx.Contains(d.TransactionNo!.Trim())
 
                 var bankCodesOfCvDetailx = cvDetailx.Select(d => d.Header.BankAccountNumber).Distinct().ToList();
 
@@ -1150,6 +1151,12 @@ namespace TaxDeclaration.Controllers
 
                 foreach (var cvhall in curcvheaderall)
                 {
+
+                    if (cvhall.Header.CvNo == "CVN000002528")
+                    {
+                        var cvInQuestion = cvhall;
+                    }
+
                     var vat = 0m;
 
                     if ((cvhall.Amt2307 != 0) && (cvhall.Percent != 0))
