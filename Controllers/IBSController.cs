@@ -101,7 +101,13 @@ namespace TaxDeclaration.Controllers
 
                 foreach (FilprideCheckVoucherDetail detail in checkVoucherDetails)
                 {
-                    detail.Header = checkVoucherHeaders.Where(h => h.CheckVoucherHeaderNo == detail.TransactionNo).FirstOrDefault();
+                    // detail.Header = checkVoucherHeaders.Where(h => h.CheckVoucherHeaderNo == detail.TransactionNo).FirstOrDefault();
+                    detail.Header = checkVoucherHeaders
+                        .Where(h => h.CheckVoucherHeaderNo == detail.TransactionNo)
+                        .FirstOrDefault()
+                        ?? checkVoucherHeaders
+                        .Where(h => h.Reference == detail.TransactionNo)
+                        .FirstOrDefault();
 
                     if (detail.Header != null)
                     {
@@ -137,7 +143,9 @@ namespace TaxDeclaration.Controllers
                     .ToList();
 
                 var cvNoFromcvheaderx = cvHeaderx.Select(h => h.CvNo).ToList();
-                var referenceFromcvheaderx = cvHeaderx.Select(h => h.Reference).ToList();
+                var referenceFromcvheaderx = cvHeaderx
+                    .Where(h => !string.IsNullOrEmpty(h.Reference))
+                    .Select(h => h.Reference).ToList();
 
                 // Verified
                 var cvDetailx = checkVoucherDetails
@@ -154,6 +162,10 @@ namespace TaxDeclaration.Controllers
                     })
                     .ToList();
                 // || referenceFromcvheaderx.Contains(d.TransactionNo!.Trim())
+
+                var suspects = cvDetailx
+                    .Where(d => d.Acctcd.StartsWith("55") || d.Acctcd.StartsWith("65"))
+                    .ToList();
 
                 var bankCodesOfCvDetailx = cvDetailx.Select(d => d.Header.BankAccountNumber).Distinct().ToList();
 
@@ -176,8 +188,8 @@ namespace TaxDeclaration.Controllers
                         CvNo = g.Key,
                         Ctr = g.Count(),
                         Records = g.ToList(),
-                        Header = cvHeaderx.Where(h => h.CvNo == g.Key).FirstOrDefault(),
-                        Company = companies.Where(c => c.BankCode == cvHeaderx.Where(h => h.CvNo == g.Key).FirstOrDefault().BankCode).FirstOrDefault()
+                        Header = cvHeaderx.Where(h => h.CvNo == g.Key).FirstOrDefault(), // no OR reference
+                        Company = companies.Where(c => c.BankCode == cvHeaderx.Where(h => h.CvNo == g.Key).FirstOrDefault()?.BankCode).FirstOrDefault()
                     })
                     .OrderByDescending(g => g.Ctr)
                     .ToList();
@@ -193,10 +205,14 @@ namespace TaxDeclaration.Controllers
                         DCRDate = new DateOnly(),
                         Company = d.Company == null ? (string)null : d.Company.Co
                     })
-                    .Where(d => d.Header.TranDate >= viewModel.DateFrom && d.Header.TranDate <= viewModel.DateTo)
+                    .Where(d => d.Header != null  // null guard mirrors FoxPro's implicit null filter
+                        && d.Header.TranDate >= viewModel.DateFrom
+                        && d.Header.TranDate <= viewModel.DateTo)
                     .OrderBy(d => d.Header.TranDate)
                     .ThenBy(d => d.Header.CvNo)
                     .ToList();
+
+                var inQuestion = curcvheader.Where(cv => cv.Header!.CvNo == "INV000002277").FirstOrDefault();
 
                 // Verified
                 var cvDetailGroup = cvDetailx
@@ -342,6 +358,12 @@ namespace TaxDeclaration.Controllers
                 // DCR
                 foreach (var cv in curcvheader)
                 {
+                    if(cv.Header.CvNo == "INV000002277")
+                    {
+
+                    }
+
+
                     var dcrEntry = dcrMainDisbursements.Where(dcr => dcr.VoucherNo.Trim() == cv.Header.CvNo.Trim()).FirstOrDefault();
 
                     if (dcrEntry != null)
@@ -365,6 +387,11 @@ namespace TaxDeclaration.Controllers
                 // 2307
                 foreach (var cv2 in curcvheader)
                 {
+                    if (cv2.Header.CvNo == "INV000002277")
+                    {
+
+                    }
+
                     if (cv2?.Header == null) continue;
 
                     var cur = cur2307
@@ -395,6 +422,11 @@ namespace TaxDeclaration.Controllers
 
                 foreach (var cv3 in curcvheader)
                 {
+                    if (cv3.Header.CvNo == "INV000002277")
+                    {
+
+                    }
+
                     var vat = 0m;
 
                     if ((cv3.Amt2307 != 0) && (cv3.Percent != 0))
@@ -940,8 +972,8 @@ namespace TaxDeclaration.Controllers
                         CvNo = cv.Key,
                         Ctr = cv.Count(),
                         Records = cv.ToList(),
-                        Header = cvHeaderx.Where(h => h.CvNo == cv.Key).FirstOrDefault(),
-                        Company = companies.Where(c => c.BankCode == cvHeaderx.Where(h => h.CvNo == cv.Key).FirstOrDefault().BankCode).FirstOrDefault()
+                        Header = cvHeaderx.Where(h => h.CvNo == cv.Key || h.Reference == cv.Key).FirstOrDefault(),
+                        Company = companies.Where(c => c.BankCode == cvHeaderx.Where(h => h.CvNo == cv.Key || h.Reference == cv.Key).FirstOrDefault()?.BankCode).FirstOrDefault()
                     })
                     .OrderByDescending(cv => cv.Ctr)
                     .ToList();
@@ -955,7 +987,10 @@ namespace TaxDeclaration.Controllers
                         DCRDate = new DateOnly(),
                         Company = d.Company == null ? (string)null : d.Company.Co
                     })
-                    .Where(d => d.Header.TranDate >= viewModel.DateFrom && d.Header.TranDate <= viewModel.DateTo)
+                    .Where(d => d.Header != null
+                        && d.Header.TranDate >= viewModel.DateFrom
+                        && d.Header.TranDate <= viewModel.DateTo
+                        && d.Header.CvNo == d.CvDtl) // exclude INV entries
                     .OrderBy(d => d.Header.TranDate)
                     .ThenBy(d => d.Header.CvNo)
                     .ToList();
@@ -1159,17 +1194,19 @@ namespace TaxDeclaration.Controllers
 
                     var vat = 0m;
 
+                    ////// CALCULATE EWT SHOULD BE
                     if ((cvhall.Amt2307 != 0) && (cvhall.Percent != 0))
                     {
                         cvhall.EwtShouldBe = cvhall.Amt2307 / (cvhall.Percent / 100);
                     }
 
-                    // FIX 1: Removed impossible dual-value condition on Acctcd
+                    ////// FIND IF VAT INPUT EXIST
                     var cvEntryall = cventriesall
                         .Where(c => c.CvNo.Trim() == cvhall.Header.CvNo.Trim() && c.Acctcd.Trim() == "101060200")
                         .FirstOrDefault();
 
-                    // VAT
+                    
+                    ////// PROCESS VAT INPUT
                     if (cvEntryall != null)
                     {
                         vat = (cvEntryall.Amount ?? 0m) / 0.12m;
@@ -1192,9 +1229,9 @@ namespace TaxDeclaration.Controllers
                             cvhall.VatOk = true;
                         }
                     }
+                    ////// TO CHECK
                     else
                     {
-                        // FIX 2: Added missing ELSE branch from FoxPro - fallback EWT amount-range lookup
                         if (cvhall.EwtShouldBe != 0)
                         {
                             var nEwt = cvhall.EwtShouldBe;

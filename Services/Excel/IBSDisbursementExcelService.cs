@@ -202,11 +202,24 @@ namespace TaxDeclaration.Services.Excel
 
             foreach (var cv in curcvheader)
             {
+
+                if (cv.Header.CvNo == "INV000002277")
+                {
+
+                }
+
                 col = 1;
 
-                worksheet.Cells[row, col].Value = cv.Header!.Reference != null ? $"{cv.Header.CvNo} / {cv.Header.Reference}" : cv.Header.CvNo; col++;
+                if (isReport3)
+                {
+                    worksheet.Cells[row, col].Value = !string.IsNullOrEmpty(cv.Header!.Reference) ? $"{cv.Header.CvNo} / {cv.Header.Reference}" : cv.Header.CvNo; col++;
+                }
+                else
+                {
+                    worksheet.Cells[row, col].Value = !string.IsNullOrEmpty(cv.Header!.Reference) ? cv.Header.Reference : cv.Header.CvNo; col++;
+                }
 
-                worksheet.Cells[row, col].Value = cv.Header.TranDate; col++; // 2
+                    worksheet.Cells[row, col].Value = cv.Header.TranDate; col++; // 2
                 worksheet.Cells[row, col].Value = cv.Header.Payee?.Trim(); col++; //3
                 worksheet.Cells[row, col].Value = cv.Header.Particulars?.Trim(); col++; //4
                 worksheet.Cells[row, col].Value = cv.Header.CheckNo?.Trim(); col++; //5
